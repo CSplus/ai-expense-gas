@@ -1,0 +1,24 @@
+{
+  "name": "ai-expense-gas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "CardImport.js",
+"scripts": {
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "push": "clasp.cmd push",
+  "pull": "clasp.cmd pull",
+  "open": "clasp.cmd open"
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CSplus/ai-expense-gas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CSplus/ai-expense-gas/issues"
+  },
+  "homepage": "https://github.com/CSplus/ai-expense-gas#readme"
+}
