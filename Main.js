@@ -115,6 +115,107 @@ function uploadReceiptFromWebApp(data) {
   }
 }
 
+
+/**
+ * ユーザーが確認・修正した内容で、送信時にだけDrive保存・経費台帳登録を行う
+ */
+function submitConfirmedReceiptFromWebApp(data) {
+  const sheet = getExpenseSheet();
+  const folder = DriveApp.getFolderById(getReceiptFolderId());
+
+  const categoryInput = data.categoryInput;
+  const memo = data.memo || '';
+  const base64 = data.imageBase64;
+  const mimeType = data.mimeType || 'image/jpeg';
+  const confirmed = data.confirmed || {};
+
+  if (!categoryInput) throw new Error('経費区分が選択されていません。');
+  if (!base64) throw new Error('領収書画像がありません。');
+  if (!confirmed.date) throw new Error('取引日を入力してください。');
+  if (!confirmed.vendor) throw new Error('店舗名・取引先を入力してください。');
+  if (!confirmed.amount) throw new Error('金額を入力してください。');
+
+  const bytes = Utilities.base64Decode(base64);
+  const now = new Date();
+  const fileName =
+    Utilities.formatDate(now, TIMEZONE, 'yyyyMMdd_HHmmss') + '_receipt.jpg';
+
+  const blob = Utilities.newBlob(bytes, mimeType, fileName);
+  const file = folder.createFile(blob);
+
+  const fileId = file.getId();
+  const fileUrl = file.getUrl();
+  const inputRule = getAccountingRuleFromInput(categoryInput);
+
+  const row = appendInitialReceiptRow(sheet, {
+    now: now,
+    fileUrl: fileUrl,
+    memo: memo,
+    accountCode: inputRule.accountCode,
+    accountName: inputRule.accountName,
+    fileId: fileId,
+    categoryInput: categoryInput
+  });
+
+  const result = {
+    date: confirmed.date || '',
+    vendor: confirmed.vendor || '',
+    amount: confirmed.amount || '',
+    category: confirmed.category || '',
+    paymentMethod: confirmed.paymentMethod || '現金',
+    invoiceNumber: confirmed.invoiceNumber || '',
+    invoiceJudgement: confirmed.invoiceJudgement || '',
+    taxRate: confirmed.taxRate || '',
+    taxAmount: confirmed.taxAmount || '',
+    taxNote: confirmed.taxNote || '',
+    memo: memo
+  };
+
+  const invoiceInfo = getInvoiceInfo(
+    result.invoiceNumber,
+    result.invoiceJudgement
+  );
+  invoiceInfo.invoiceJudgement = result.invoiceJudgement || invoiceInfo.invoiceJudgement;
+  invoiceInfo.note = invoiceInfo.registrationNumber
+    ? 'ユーザー確認済（API未使用・正式名称未確認）'
+    : 'ユーザー確認済';
+
+  const rule = getAccountingRule(result.vendor || '');
+  const vendorOfficialName =
+    invoiceInfo.officialName ||
+    rule.vendorName ||
+    result.vendor ||
+    '';
+  const taxInfo = {
+    taxRate: normalizeTaxRateText(result.taxRate),
+    taxAmount: result.taxAmount === '' ? '' : Number(result.taxAmount),
+    taxNote: result.taxNote || 'ユーザー確認済'
+  };
+  const invoiceNote = [
+    'ユーザー確認・修正後の内容で登録',
+    invoiceInfo.note || '',
+    taxInfo.taxNote || ''
+  ]
+    .filter(function(v) { return v; })
+    .join(' / ');
+
+  updateReceiptAnalysisResult(sheet, row, {
+    result: result,
+    inputRule: inputRule,
+    invoiceInfo: invoiceInfo,
+    vendorOfficialName: vendorOfficialName,
+    taxInfo: taxInfo,
+    invoiceNote: invoiceNote
+  });
+
+  return {
+    success: true,
+    message: '登録が完了しました。',
+    row: row,
+    fileUrl: fileUrl
+  };
+}
+
 /**
  * Webアプリから領収書画像を受け取り、Drive/Sheetsへ保存せずGemini解析だけを行う
  */
