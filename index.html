@@ -138,6 +138,48 @@
       background: #f1f3f4;
       border-radius: 12px;
     }
+
+    #confirmArea {
+      display: none;
+      margin-top: 22px;
+      padding: 18px;
+      background: #fff8e1;
+      border: 2px solid #fbbc04;
+      border-radius: 14px;
+    }
+
+    .confirmTitle {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .confirmGrid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .confirmField label {
+      display: block;
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .confirmField input,
+    .confirmField select,
+    .confirmField textarea {
+      font-size: 26px;
+      padding: 14px;
+    }
+
+    .saveNotice {
+      margin-top: 16px;
+      font-size: 24px;
+      line-height: 1.5;
+      color: #5f4500;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -194,14 +236,41 @@
       type="file"
       accept="image/*"
       capture="environment"
-      onchange="showFileName()"
+      onchange="showFileName(); analyzeReceipt();"
     >
 
     <div id="fileName">まだ撮影されていません</div>
 
-    <button id="sendButton" onclick="submitReceipt()" disabled>
-      送信
+    <button id="sendButton" onclick="analyzeReceipt()" disabled>
+      解析する
     </button>
+
+    <div id="confirmArea">
+      <div class="confirmTitle">送信前確認</div>
+      <div class="confirmGrid">
+        <div class="confirmField"><label for="confirmDate">取引日</label><input id="confirmDate" type="date"></div>
+        <div class="confirmField"><label for="confirmVendor">店舗名・取引先</label><input id="confirmVendor" type="text"></div>
+        <div class="confirmField"><label for="confirmAmount">金額（税込）</label><input id="confirmAmount" type="number" inputmode="numeric"></div>
+        <div class="confirmField"><label for="confirmInputCategory">選択した経費区分</label><input id="confirmInputCategory" type="text" readonly></div>
+        <div class="confirmField"><label for="confirmCategory">Gemini判定カテゴリ</label><input id="confirmCategory" type="text"></div>
+        <div class="confirmField">
+          <label for="confirmPaymentMethod">支払方法</label>
+          <select id="confirmPaymentMethod">
+            <option value="現金">現金</option>
+            <option value="クレジット">クレジット</option>
+            <option value="電子マネー">電子マネー</option>
+            <option value="QR決済">QR決済</option>
+            <option value="不明">不明</option>
+          </select>
+        </div>
+        <div class="confirmField"><label for="confirmInvoiceNumber">登録番号</label><input id="confirmInvoiceNumber" type="text" placeholder="T1234567890123"></div>
+        <div class="confirmField"><label for="confirmInvoiceJudgement">インボイス判定</label><input id="confirmInvoiceJudgement" type="text"></div>
+        <div class="confirmField"><label for="confirmTaxRate">税率</label><input id="confirmTaxRate" type="text"></div>
+        <div class="confirmField"><label for="confirmTaxAmount">消費税額</label><input id="confirmTaxAmount" type="number" inputmode="numeric"></div>
+        <div class="confirmField"><label for="confirmTaxNote">税率・消費税メモ</label><textarea id="confirmTaxNote"></textarea></div>
+      </div>
+      <div class="saveNotice">この画面では確認・編集のみ行います。Drive保存とSheets登録は次のPRで実装します。</div>
+    </div>
 
     <div id="result"></div>
   </div>
@@ -311,7 +380,7 @@
         ok = imageSelected && memo;
       }
 
-      document.getElementById('sendButton').disabled = !ok;
+      document.getElementById('sendButton').disabled = !(category && imageSelected);
     }
 
     document.getElementById('memo').addEventListener('input', updateSendButton);
@@ -331,28 +400,41 @@
       return '';
     }
 
-    function submitReceipt() {
+    function setAnalysisResult(res) {
+      document.getElementById('confirmDate').value = res.date || '';
+      document.getElementById('confirmVendor').value = res.vendor || '';
+      document.getElementById('confirmAmount').value = res.amount || '';
+      document.getElementById('confirmInputCategory').value = res.inputCategory || getSelectedCategory();
+      document.getElementById('confirmCategory').value = res.category || '';
+      document.getElementById('confirmPaymentMethod').value = res.paymentMethod || '現金';
+      document.getElementById('confirmInvoiceNumber').value = res.invoiceNumber || '';
+      document.getElementById('confirmInvoiceJudgement').value = res.invoiceJudgement || '';
+      document.getElementById('confirmTaxRate').value = res.taxRate || '';
+      document.getElementById('confirmTaxAmount').value = res.taxAmount || '';
+      document.getElementById('confirmTaxNote').value = res.taxNote || res.invoiceNote || '';
+      document.getElementById('confirmArea').style.display = 'block';
+    }
+
+    function analyzeReceipt() {
       const category = getSelectedCategory();
-      const memo = buildMemoText(category);
       const fileInput = document.getElementById('receiptImage');
       const result = document.getElementById('result');
       const button = document.getElementById('sendButton');
 
       if (!category) {
-        alert('経費区分を選択してください。');
+        result.textContent = '経費区分を選択してから解析してください。';
+        updateSendButton();
         return;
       }
 
-      if (!fileInput.files.length) {
-        alert('領収書を撮影してください。');
-        return;
-      }
+      if (!fileInput.files.length) return;
 
       const file = fileInput.files[0];
       const reader = new FileReader();
 
       button.disabled = true;
-      result.textContent = '送信中です。しばらくお待ちください...';
+      document.getElementById('confirmArea').style.display = 'none';
+      result.textContent = 'Geminiで解析中です。しばらくお待ちください...';
 
       reader.onload = function(e) {
         const base64 = e.target.result.split(',')[1];
@@ -362,32 +444,18 @@
             button.disabled = false;
 
             if (res.success) {
-              result.textContent =
-                '登録完了\n\n' +
-                '取引日：' + res.date + '\n' +
-                '店舗名：' + res.vendor + '\n' +
-                '金額：' + res.amount + '円\n' +
-                '勘定科目：' + res.category;
-
-              document.getElementById('memo').value = '';
-              document.getElementById('mealPurpose').value = '';
-              document.getElementById('receiptImage').value = '';
-              document.getElementById('fileName').textContent = 'まだ撮影されていません';
-              toggleInputs();
-              updateSendButton();
+              setAnalysisResult(res);
+              result.textContent = '解析結果を確認し、必要に応じて編集してください。まだ保存はされていません。';
             } else {
-              result.textContent =
-                '登録しましたが、読取に失敗しました。\n\n' +
-                res.message;
+              result.textContent = '読取に失敗しました。\n\n' + res.message;
             }
           })
           .withFailureHandler(function(err) {
             button.disabled = false;
             result.textContent = 'エラー：' + err.message;
           })
-          .uploadReceiptFromWebApp({
+          .analyzeReceiptFromWebApp({
             categoryInput: category,
-            memo: memo,
             imageBase64: base64,
             mimeType: file.type
           });

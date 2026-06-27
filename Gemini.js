@@ -3,16 +3,14 @@
  * Gemini OCR・領収書解析
  *************************************************/
 
-function analyzeReceiptWithGemini(fileId) {
+
+function analyzeReceiptImageWithGemini(base64Data, mimeType) {
+  if (!base64Data) throw new Error('領収書画像がありません。');
+
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY が設定されていません。');
 
   const model = getGeminiModel();
-  const file = DriveApp.getFileById(fileId);
-  const blob = file.getBlob();
-  const mimeType = blob.getContentType();
-  const base64Data = Utilities.base64Encode(blob.getBytes());
-
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
@@ -25,7 +23,7 @@ function analyzeReceiptWithGemini(fileId) {
           { text: prompt },
           {
             inlineData: {
-              mimeType: mimeType,
+              mimeType: mimeType || 'image/jpeg',
               data: base64Data
             }
           }
@@ -52,7 +50,11 @@ function analyzeReceiptWithGemini(fileId) {
     throw new Error(responseText);
   }
 
-  const result = JSON.parse(text);
+  return normalizeGeminiReceiptResult(JSON.parse(text));
+}
+
+function normalizeGeminiReceiptResult(result) {
+  result = result || {};
 
   // 支払方法は、判定不能なら現金扱い。
   if (!result.paymentMethod || result.paymentMethod === '不明') {
@@ -67,6 +69,15 @@ function analyzeReceiptWithGemini(fileId) {
   result.invoiceNote = result.invoiceNote || result.invoice_note || '';
 
   return result;
+}
+
+function analyzeReceiptWithGemini(fileId) {
+  const file = DriveApp.getFileById(fileId);
+  const blob = file.getBlob();
+  const mimeType = blob.getContentType();
+  const base64Data = Utilities.base64Encode(blob.getBytes());
+
+  return analyzeReceiptImageWithGemini(base64Data, mimeType);
 }
 
 function getReceiptAnalysisPrompt() {
