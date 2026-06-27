@@ -180,6 +180,10 @@
       color: #5f4500;
       font-weight: bold;
     }
+
+    .submitButton {
+      background: #34a853;
+    }
   </style>
 </head>
 
@@ -236,14 +240,11 @@
       type="file"
       accept="image/*"
       capture="environment"
-      onchange="showFileName(); analyzeReceipt();"
+      onchange="showFileName();"
     >
 
     <div id="fileName">まだ撮影されていません</div>
 
-    <button id="sendButton" onclick="analyzeReceipt()" disabled>
-      解析する
-    </button>
 
     <div id="confirmArea">
       <div class="confirmTitle">送信前確認</div>
@@ -269,7 +270,8 @@
         <div class="confirmField"><label for="confirmTaxAmount">消費税額</label><input id="confirmTaxAmount" type="number" inputmode="numeric"></div>
         <div class="confirmField"><label for="confirmTaxNote">税率・消費税メモ</label><textarea id="confirmTaxNote"></textarea></div>
       </div>
-      <div class="saveNotice">この画面では確認・編集のみ行います。Drive保存とSheets登録は次のPRで実装します。</div>
+      <div class="saveNotice">内容を確認・修正してから送信してください。送信ボタンを押すまでDrive保存とSheets登録は行いません。</div>
+      <button id="submitButton" class="submitButton" onclick="submitConfirmedReceipt()">送信</button>
     </div>
 
     <div id="result"></div>
@@ -312,6 +314,7 @@
       }
 
       updateSendButton();
+      analyzeReceipt();
     }
 
     function toggleMealMemo() {
@@ -352,8 +355,10 @@
         ? '撮影済み：' + fileInput.files[0].name
         : 'まだ撮影されていません';
       document.getElementById('result').textContent = '';
+      document.getElementById('confirmArea').style.display = 'none';
+      document.getElementById('submitButton').disabled = true;
 
-      updateSendButton();
+      analyzeReceipt();
     }
 
     function updateSendButton() {
@@ -380,7 +385,6 @@
         ok = imageSelected && memo;
       }
 
-      document.getElementById('sendButton').disabled = !(category && imageSelected);
     }
 
     document.getElementById('memo').addEventListener('input', updateSendButton);
@@ -413,17 +417,117 @@
       document.getElementById('confirmTaxAmount').value = res.taxAmount || '';
       document.getElementById('confirmTaxNote').value = res.taxNote || res.invoiceNote || '';
       document.getElementById('confirmArea').style.display = 'block';
+      document.getElementById('submitButton').disabled = false;
+    }
+
+    function getConfirmedValues() {
+      return {
+        date: document.getElementById('confirmDate').value,
+        vendor: document.getElementById('confirmVendor').value.trim(),
+        amount: document.getElementById('confirmAmount').value,
+        category: document.getElementById('confirmCategory').value.trim(),
+        paymentMethod: document.getElementById('confirmPaymentMethod').value,
+        invoiceNumber: document.getElementById('confirmInvoiceNumber').value.trim(),
+        invoiceJudgement: document.getElementById('confirmInvoiceJudgement').value.trim(),
+        taxRate: document.getElementById('confirmTaxRate').value.trim(),
+        taxAmount: document.getElementById('confirmTaxAmount').value,
+        taxNote: document.getElementById('confirmTaxNote').value.trim()
+      };
+    }
+
+    function normalizeInvoiceNumberInput(value) {
+      let text = String(value || '')
+        .replace(/[Ｔｔ]/g, 'T')
+        .replace(/[０-９]/g, function(s) {
+          return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        })
+        .replace(/[\s　\-ー−―]/g, '')
+        .toUpperCase();
+
+      if (!text) return '';
+      if (/^\d{13}$/.test(text)) return 'T' + text;
+      if (/^T\d{13}$/.test(text)) return text;
+      return null;
+    }
+
+    function validateConfirmedValues(values) {
+      const normalizedInvoiceNumber = normalizeInvoiceNumberInput(values.invoiceNumber);
+
+      if (normalizedInvoiceNumber === null) {
+        return 'インボイス登録番号は T + 13桁の数字、または13桁の数字で入力してください。';
+      }
+
+      values.invoiceNumber = normalizedInvoiceNumber;
+      document.getElementById('confirmInvoiceNumber').value = normalizedInvoiceNumber;
+
+      if (!values.date) return '取引日を入力してください。';
+      if (!values.vendor) return '店舗名・取引先を入力してください。';
+      if (!values.amount) return '金額を入力してください。';
+      return '';
+    }
+
+    function submitConfirmedReceipt() {
+      const category = getSelectedCategory();
+      const fileInput = document.getElementById('receiptImage');
+      const result = document.getElementById('result');
+      const submitButton = document.getElementById('submitButton');
+      const values = getConfirmedValues();
+      const validationMessage = validateConfirmedValues(values);
+
+      if (validationMessage) {
+        result.textContent = validationMessage;
+        return;
+      }
+
+      if (!category || !fileInput.files.length) {
+        result.textContent = '経費区分と領収書画像を確認してください。';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      submitButton.disabled = true;
+      result.textContent = 'Drive保存とSheets登録を実行中です。しばらくお待ちください...';
+
+      reader.onload = function(e) {
+        const base64 = e.target.result.split(',')[1];
+
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res.success) {
+              result.textContent = res.message || '登録が完了しました。';
+              document.getElementById('confirmArea').style.display = 'none';
+              document.getElementById('receiptImage').value = '';
+              document.getElementById('fileName').textContent = 'まだ撮影されていません';
+              updateSendButton();
+            } else {
+              submitButton.disabled = false;
+              result.textContent = '登録に失敗しました。\n\n' + res.message;
+            }
+          })
+          .withFailureHandler(function(err) {
+            submitButton.disabled = false;
+            result.textContent = 'エラー：' + err.message;
+          })
+          .submitConfirmedReceiptFromWebApp({
+            categoryInput: category,
+            memo: buildMemoText(category),
+            imageBase64: base64,
+            mimeType: file.type,
+            confirmed: values
+          });
+      };
+
+      reader.readAsDataURL(file);
     }
 
     function analyzeReceipt() {
       const category = getSelectedCategory();
       const fileInput = document.getElementById('receiptImage');
       const result = document.getElementById('result');
-      const button = document.getElementById('sendButton');
-
       if (!category) {
         result.textContent = '経費区分を選択してから解析してください。';
-        updateSendButton();
         return;
       }
 
@@ -432,17 +536,15 @@
       const file = fileInput.files[0];
       const reader = new FileReader();
 
-      button.disabled = true;
       document.getElementById('confirmArea').style.display = 'none';
-      result.textContent = 'Geminiで解析中です。しばらくお待ちください...';
+      document.getElementById('submitButton').disabled = true;
+      result.textContent = 'AIが読み取り中です。しばらくお待ちください...';
 
       reader.onload = function(e) {
         const base64 = e.target.result.split(',')[1];
 
         google.script.run
           .withSuccessHandler(function(res) {
-            button.disabled = false;
-
             if (res.success) {
               setAnalysisResult(res);
               result.textContent = '解析結果を確認し、必要に応じて編集してください。まだ保存はされていません。';
@@ -451,7 +553,6 @@
             }
           })
           .withFailureHandler(function(err) {
-            button.disabled = false;
             result.textContent = 'エラー：' + err.message;
           })
           .analyzeReceiptFromWebApp({
