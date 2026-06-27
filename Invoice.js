@@ -20,6 +20,8 @@ function normalizeInvoiceNumber(value) {
     .replace(/[^Tt0-9]/g, '')
     .toUpperCase();
 
+  if (/^\d{13}$/.test(text)) return 'T' + text;
+
   const match = text.match(/T\d{13}/);
   if (!match) return '';
 
