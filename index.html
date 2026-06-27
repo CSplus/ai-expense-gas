@@ -192,22 +192,22 @@
     <h1>CS+ 経費領収書アップロード</h1>
 
     <label class="radioLabel">
-      <input type="radio" name="category" value="駐車場・交通費" onchange="toggleInputs()">
+      <input type="radio" name="category" value="駐車場・交通費" onchange="toggleInputs(); maybeAnalyzeReceipt();">
       🚗 駐車場・交通費
     </label>
 
     <label class="radioLabel">
-      <input type="radio" name="category" value="飲食費・会食" onchange="toggleInputs()">
+      <input type="radio" name="category" value="飲食費・会食" onchange="toggleInputs(); maybeAnalyzeReceipt();">
       🍺 飲食費・会食
     </label>
 
     <label class="radioLabel">
-      <input type="radio" name="category" value="ガソリン" onchange="toggleInputs()">
+      <input type="radio" name="category" value="ガソリン" onchange="toggleInputs(); maybeAnalyzeReceipt();">
       ⛽ ガソリン
     </label>
 
     <label class="radioLabel">
-      <input type="radio" name="category" value="その他経費" onchange="toggleInputs()">
+      <input type="radio" name="category" value="その他経費" onchange="toggleInputs(); maybeAnalyzeReceipt();">
       🛒 その他経費
     </label>
 
@@ -240,14 +240,11 @@
       type="file"
       accept="image/*"
       capture="environment"
-      onchange="showFileName(); analyzeReceipt();"
+      onchange="showFileName(); maybeAnalyzeReceipt();"
     >
 
     <div id="fileName">まだ撮影されていません</div>
 
-    <button id="sendButton" onclick="analyzeReceipt()" disabled>
-      解析する
-    </button>
 
     <div id="confirmArea">
       <div class="confirmTitle">送信前確認</div>
@@ -267,7 +264,7 @@
             <option value="不明">不明</option>
           </select>
         </div>
-        <div class="confirmField"><label for="confirmInvoiceNumber">登録番号</label><input id="confirmInvoiceNumber" type="text" placeholder="T1234567890123"></div>
+        <div class="confirmField"><label for="confirmInvoiceNumber">登録番号</label><input id="confirmInvoiceNumber" type="text" placeholder="T1234567890123" oninput="normalizeInvoiceInput(false)"></div>
         <div class="confirmField"><label for="confirmInvoiceJudgement">インボイス判定</label><input id="confirmInvoiceJudgement" type="text"></div>
         <div class="confirmField"><label for="confirmTaxRate">税率</label><input id="confirmTaxRate" type="text"></div>
         <div class="confirmField"><label for="confirmTaxAmount">消費税額</label><input id="confirmTaxAmount" type="number" inputmode="numeric"></div>
@@ -358,6 +355,7 @@
         : 'まだ撮影されていません';
       document.getElementById('result').textContent = '';
       document.getElementById('confirmArea').style.display = 'none';
+      lastAnalysisKey = '';
       document.getElementById('submitButton').disabled = true;
 
       updateSendButton();
@@ -387,7 +385,7 @@
         ok = imageSelected && memo;
       }
 
-      document.getElementById('sendButton').disabled = !ok;
+      maybeAnalyzeReceipt();
     }
 
     document.getElementById('memo').addEventListener('input', updateSendButton);
@@ -414,7 +412,7 @@
       document.getElementById('confirmInputCategory').value = res.inputCategory || getSelectedCategory();
       document.getElementById('confirmCategory').value = res.category || '';
       document.getElementById('confirmPaymentMethod').value = res.paymentMethod || '現金';
-      document.getElementById('confirmInvoiceNumber').value = res.invoiceNumber || '';
+      document.getElementById('confirmInvoiceNumber').value = normalizeInvoiceNumber(res.invoiceNumber || '');
       document.getElementById('confirmInvoiceJudgement').value = res.invoiceJudgement || '';
       document.getElementById('confirmTaxRate').value = res.taxRate || '';
       document.getElementById('confirmTaxAmount').value = res.taxAmount || '';
@@ -430,7 +428,7 @@
         amount: document.getElementById('confirmAmount').value,
         category: document.getElementById('confirmCategory').value.trim(),
         paymentMethod: document.getElementById('confirmPaymentMethod').value,
-        invoiceNumber: document.getElementById('confirmInvoiceNumber').value.trim(),
+        invoiceNumber: normalizeInvoiceNumber(document.getElementById('confirmInvoiceNumber').value),
         invoiceJudgement: document.getElementById('confirmInvoiceJudgement').value.trim(),
         taxRate: document.getElementById('confirmTaxRate').value.trim(),
         taxAmount: document.getElementById('confirmTaxAmount').value,
@@ -442,7 +440,44 @@
       if (!values.date) return '取引日を入力してください。';
       if (!values.vendor) return '店舗名・取引先を入力してください。';
       if (!values.amount) return '金額を入力してください。';
+      const invoiceValidationMessage = validateInvoiceNumber(values.invoiceNumber);
+      if (invoiceValidationMessage) return invoiceValidationMessage;
       return '';
+    }
+
+    function normalizeInvoiceNumber(value) {
+      if (!value) return '';
+
+      const text = String(value)
+        .replace(/[Ｔｔ]/g, 'T')
+        .replace(/[０-９]/g, function(s) {
+          return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+        })
+        .replace(/[^Tt0-9]/g, '')
+        .toUpperCase();
+
+      if (/^\d{13}$/.test(text)) return 'T' + text;
+      return text;
+    }
+
+    function validateInvoiceNumber(value) {
+      if (!value) return '';
+      return /^T\d{13}$/.test(value)
+        ? ''
+        : '登録番号は「T」+ 数字13桁（または数字13桁）で入力してください。';
+    }
+
+    function normalizeInvoiceInput(showError) {
+      const input = document.getElementById('confirmInvoiceNumber');
+      const normalized = normalizeInvoiceNumber(input.value);
+      input.value = normalized;
+
+      if (showError) {
+        const message = validateInvoiceNumber(normalized);
+        if (message) document.getElementById('result').textContent = message;
+      }
+
+      return normalized;
     }
 
     function submitConfirmedReceipt() {
@@ -450,6 +485,7 @@
       const fileInput = document.getElementById('receiptImage');
       const result = document.getElementById('result');
       const submitButton = document.getElementById('submitButton');
+      normalizeInvoiceInput(false);
       const values = getConfirmedValues();
       const validationMessage = validateConfirmedValues(values);
 
@@ -501,24 +537,35 @@
       reader.readAsDataURL(file);
     }
 
-    function analyzeReceipt() {
+    let analysisInProgress = false;
+    let lastAnalysisKey = '';
+
+    function maybeAnalyzeReceipt() {
+      const category = getSelectedCategory();
+      const fileInput = document.getElementById('receiptImage');
+
+      if (!category || !fileInput.files.length || analysisInProgress) return;
+
+      const file = fileInput.files[0];
+      const analysisKey = [category, file.name, file.size, file.lastModified].join('|');
+      if (analysisKey === lastAnalysisKey) return;
+
+      analyzeReceipt(analysisKey);
+    }
+
+    function analyzeReceipt(analysisKey) {
       const category = getSelectedCategory();
       const fileInput = document.getElementById('receiptImage');
       const result = document.getElementById('result');
-      const button = document.getElementById('sendButton');
 
-      if (!category) {
-        result.textContent = '経費区分を選択してから解析してください。';
-        updateSendButton();
-        return;
-      }
+      if (!category) return;
 
       if (!fileInput.files.length) return;
 
       const file = fileInput.files[0];
       const reader = new FileReader();
 
-      button.disabled = true;
+      analysisInProgress = true;
       document.getElementById('confirmArea').style.display = 'none';
       document.getElementById('submitButton').disabled = true;
       result.textContent = 'Geminiで解析中です。しばらくお待ちください...';
@@ -528,9 +575,10 @@
 
         google.script.run
           .withSuccessHandler(function(res) {
-            button.disabled = false;
+            analysisInProgress = false;
 
             if (res.success) {
+              lastAnalysisKey = analysisKey || '';
               setAnalysisResult(res);
               result.textContent = '解析結果を確認し、必要に応じて編集してください。まだ保存はされていません。';
             } else {
@@ -538,7 +586,7 @@
             }
           })
           .withFailureHandler(function(err) {
-            button.disabled = false;
+            analysisInProgress = false;
             result.textContent = 'エラー：' + err.message;
           })
           .analyzeReceiptFromWebApp({
