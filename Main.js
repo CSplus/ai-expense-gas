@@ -40,38 +40,15 @@ function uploadReceiptFromWebApp(data) {
 
   const inputRule = getAccountingRuleFromInput(categoryInput);
 
-  // まず受信済みとして1行追加
-  sheet.appendRow([
-    now,                    // A タイムスタンプ
-    fileUrl,                // B 領収書画像アップロード
-    memo,                   // C 内容のメモ
-    '',                     // D 取引日
-    '',                     // E 店舗名
-    '',                     // F 金額
-    inputRule.accountCode,  // G 勘定科目コード
-    inputRule.accountName,  // H 勘定科目名
-    '受信済',               // I 処理状態
-    fileId,                 // J ファイルID
-    '',                     // K エラー内容
-    '',                     // L 取引先正規名
-    '現金',                 // M 支払方法
-    '領収書画像',           // N 証憑種別
-    '',                     // O 元ファイル名
-    '未確認',               // P 確認
-    categoryInput,          // Q 入力区分
-    '',                     // R 重複判定
-    '',                     // S 重複候補ID
-    '対象',                 // T 集計対象
-    '',                     // U 登録番号
-    '',                     // V インボイス判定
-    '',                     // W インボイス登録状態
-    '',                     // X インボイス確認日
-    '',                     // Y 税率
-    '',                     // Z 消費税額
-    ''                      // AA インボイス備考
-  ]);
-
-  const row = sheet.getLastRow();
+  const row = appendInitialReceiptRow(sheet, {
+    now: now,
+    fileUrl: fileUrl,
+    memo: memo,
+    accountCode: inputRule.accountCode,
+    accountName: inputRule.accountName,
+    fileId: fileId,
+    categoryInput: categoryInput
+  });
 
   try {
     // Geminiで領収書を解析
@@ -99,27 +76,6 @@ function uploadReceiptFromWebApp(data) {
     // 税率・消費税額の補完
     const taxInfo = normalizeTaxInfo(result);
 
-    // 基本情報を書き込み
-    sheet.getRange(row, COL.DATE).setValue(result.date || '');
-    sheet.getRange(row, COL.VENDOR).setValue(result.vendor || '');
-    sheet.getRange(row, COL.AMOUNT).setValue(result.amount || '');
-    sheet.getRange(row, COL.ACCOUNT_CODE).setValue(inputRule.accountCode);
-    sheet.getRange(row, COL.ACCOUNT_NAME).setValue(inputRule.accountName);
-    sheet.getRange(row, COL.STATUS).setValue('読取済');
-    sheet.getRange(row, COL.VENDOR_NORMALIZED).setValue(vendorOfficialName);
-    sheet.getRange(row, COL.PAYMENT_METHOD).setValue(result.paymentMethod || '現金');
-
-    // インボイス情報を書き込み
-    sheet.getRange(row, COL.INVOICE_NUMBER).setValue(invoiceInfo.registrationNumber || '');
-    sheet.getRange(row, COL.INVOICE_JUDGEMENT).setValue(invoiceInfo.invoiceJudgement || '');
-    sheet.getRange(row, COL.INVOICE_STATUS).setValue(invoiceInfo.invoiceStatus || '');
-    sheet.getRange(row, COL.INVOICE_CHECKED_AT).setValue(invoiceInfo.checkedAt || '');
-
-    // 税率・消費税額を書き込み
-    sheet.getRange(row, COL.TAX_RATE).setValue(taxInfo.taxRate || '');
-    sheet.getRange(row, COL.TAX_AMOUNT).setValue(taxInfo.taxAmount || '');
-
-    // 備考
     const invoiceNote = [
       invoiceInfo.note || '',
       taxInfo.taxNote || ''
@@ -127,7 +83,14 @@ function uploadReceiptFromWebApp(data) {
       .filter(function(v) { return v; })
       .join(' / ');
 
-    sheet.getRange(row, COL.INVOICE_NOTE).setValue(invoiceNote);
+    updateReceiptAnalysisResult(sheet, row, {
+      result: result,
+      inputRule: inputRule,
+      invoiceInfo: invoiceInfo,
+      vendorOfficialName: vendorOfficialName,
+      taxInfo: taxInfo,
+      invoiceNote: invoiceNote
+    });
 
     return {
       success: true,
@@ -143,8 +106,7 @@ function uploadReceiptFromWebApp(data) {
     };
 
   } catch (error) {
-    sheet.getRange(row, COL.STATUS).setValue('エラー：読取失敗');
-    sheet.getRange(row, COL.ERROR).setValue(error.message);
+    markReceiptAnalysisError(sheet, row, error.message);
 
     return {
       success: false,

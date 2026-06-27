@@ -28,6 +28,8 @@ function updateReceiptAnalysisResult(sheet, row, params) {
   const inputRule = params.inputRule;
   const invoiceInfo = params.invoiceInfo;
   const vendorOfficialName = params.vendorOfficialName;
+  const taxInfo = params.taxInfo || {};
+  const invoiceNote = params.invoiceNote || invoiceInfo.note || result.invoiceNote || '';
 
   sheet.getRange(row, COL.DATE).setValue(result.date || '');
   sheet.getRange(row, COL.VENDOR).setValue(result.vendor || '');
@@ -42,9 +44,14 @@ function updateReceiptAnalysisResult(sheet, row, params) {
   sheet.getRange(row, COL.INVOICE_JUDGEMENT).setValue(invoiceInfo.invoiceJudgement || '');
   sheet.getRange(row, COL.INVOICE_STATUS).setValue(invoiceInfo.invoiceStatus || '');
   sheet.getRange(row, COL.INVOICE_CHECKED_AT).setValue(invoiceInfo.checkedAt || '');
-  sheet.getRange(row, COL.TAX_RATE).setValue(result.taxRate || '');
-  sheet.getRange(row, COL.TAX_AMOUNT).setValue(result.taxAmount || '');
-  sheet.getRange(row, COL.INVOICE_NOTE).setValue(invoiceInfo.note || result.invoiceNote || '');
+  sheet.getRange(row, COL.TAX_RATE).setValue(taxInfo.taxRate || '');
+  sheet.getRange(row, COL.TAX_AMOUNT).setValue(taxInfo.taxAmount || '');
+  sheet.getRange(row, COL.INVOICE_NOTE).setValue(invoiceNote);
+}
+
+function markReceiptAnalysisError(sheet, row, message) {
+  sheet.getRange(row, COL.STATUS).setValue('エラー：読取失敗');
+  sheet.getRange(row, COL.ERROR).setValue(message);
 }
 
 function appendCardExpenseRow(sheet, date, vendor, amount, paymentMethod, fileName) {
@@ -66,80 +73,4 @@ function appendCardExpenseRow(sheet, date, vendor, amount, paymentMethod, fileNa
   rowValues[COL.SUMMARY_TARGET - 1] = '対象';
 
   sheet.appendRow(rowValues);
-}
-
-/**
- * 税率・消費税額を整える
- * 領収書に税額記載がない場合は、税込金額から推定する
- */
-function normalizeTaxInfo(result) {
-  const amount = Number(result.amount || 0);
-
-  let taxRate = result.taxRate || result.tax_rate || '';
-  let taxAmount = result.taxAmount || result.tax_amount || '';
-  let taxEstimated = result.taxEstimated === true || result.tax_estimated === true;
-  let taxNote = result.taxNote || result.tax_note || '';
-
-  // 表記ゆれ補正
-  taxRate = String(taxRate || '').trim();
-
-  if (taxRate === '１０％') taxRate = '10%';
-  if (taxRate === '８％') taxRate = '8%';
-
-  // Geminiが税額を返している場合
-  if (taxAmount !== '' && taxAmount !== null && taxAmount !== undefined) {
-    return {
-      taxRate: taxRate || '不明',
-      taxAmount: Number(taxAmount),
-      taxNote: taxEstimated ? '消費税額はAI推定' : '消費税額は領収書記載'
-    };
-  }
-
-  // 金額が無い場合は計算不可
-  if (!amount) {
-    return {
-      taxRate: taxRate || '不明',
-      taxAmount: '',
-      taxNote: '税込金額が不明のため消費税額を計算できません'
-    };
-  }
-
-  // 税率が10%なら税込金額から計算
-  if (taxRate === '10%') {
-    return {
-      taxRate: '10%',
-      taxAmount: Math.round(amount / 1.1 * 0.1),
-      taxNote: '消費税額は税込金額からAI推定'
-    };
-  }
-
-  // 税率が8%なら税込金額から計算
-  if (taxRate === '8%') {
-    return {
-      taxRate: '8%',
-      taxAmount: Math.round(amount / 1.08 * 0.08),
-      taxNote: '消費税額は税込金額からAI推定'
-    };
-  }
-
-  // 税率が不明でも、飲食・サービス系は10%推定
-  const vendor = String(result.vendor || '').trim();
-  const category = String(result.category || '').trim();
-
-  if (
-    category === '接待交際費' ||
-    vendor.match(/居酒屋|食堂|レストラン|バル|カフェ|喫茶|駐車場|パーキング|ホテル|ガソリン|ENEOS|出光|コスモ/)
-  ) {
-    return {
-      taxRate: '10%',
-      taxAmount: Math.round(amount / 1.1 * 0.1),
-      taxNote: '税率・消費税額は業種からAI推定'
-    };
-  }
-
-  return {
-    taxRate: '不明',
-    taxAmount: '',
-    taxNote: '税率を判定できませんでした'
-  };
 }
