@@ -4,20 +4,20 @@
  *************************************************/
 
 function appendInitialReceiptRow(sheet, params) {
-  const rowValues = new Array(COL.INVOICE_NOTE).fill('');
-
-  rowValues[COL.TIMESTAMP - 1] = params.now;
-  rowValues[COL.RECEIPT_URL - 1] = params.fileUrl;
-  rowValues[COL.MEMO - 1] = params.memo;
-  rowValues[COL.ACCOUNT_CODE - 1] = params.accountCode;
-  rowValues[COL.ACCOUNT_NAME - 1] = params.accountName;
-  rowValues[COL.STATUS - 1] = '受信済';
-  rowValues[COL.FILE_ID - 1] = params.fileId;
-  rowValues[COL.PAYMENT_METHOD - 1] = '現金';
-  rowValues[COL.EVIDENCE_TYPE - 1] = '領収書画像';
-  rowValues[COL.CONFIRM - 1] = '未確認';
-  rowValues[COL.INPUT_CATEGORY - 1] = params.categoryInput;
-  rowValues[COL.SUMMARY_TARGET - 1] = '対象';
+  const rowValues = createExpenseRowValues({
+    timestamp: params.now,
+    receiptUrl: params.fileUrl,
+    memo: params.memo,
+    accountCode: params.accountCode,
+    accountName: params.accountName,
+    status: '受信済',
+    fileId: params.fileId,
+    paymentMethod: '現金',
+    evidenceType: '領収書画像',
+    confirm: '未確認',
+    inputCategory: params.categoryInput,
+    summaryTarget: '対象'
+  });
 
   sheet.appendRow(rowValues);
   return sheet.getLastRow();
@@ -31,46 +31,106 @@ function updateReceiptAnalysisResult(sheet, row, params) {
   const taxInfo = params.taxInfo || {};
   const invoiceNote = params.invoiceNote || invoiceInfo.note || result.invoiceNote || '';
 
-  sheet.getRange(row, COL.DATE).setValue(result.date || '');
-  sheet.getRange(row, COL.VENDOR).setValue(result.vendor || '');
-  sheet.getRange(row, COL.AMOUNT).setValue(result.amount || '');
-  sheet.getRange(row, COL.ACCOUNT_CODE).setValue(inputRule.accountCode);
-  sheet.getRange(row, COL.ACCOUNT_NAME).setValue(inputRule.accountName);
-  sheet.getRange(row, COL.STATUS).setValue('読取済');
-  sheet.getRange(row, COL.VENDOR_NORMALIZED).setValue(vendorOfficialName || '');
-  sheet.getRange(row, COL.PAYMENT_METHOD).setValue(result.paymentMethod || '現金');
-
-  sheet.getRange(row, COL.INVOICE_NUMBER).setValue(invoiceInfo.registrationNumber || '');
-  sheet.getRange(row, COL.INVOICE_JUDGEMENT).setValue(invoiceInfo.invoiceJudgement || '');
-  sheet.getRange(row, COL.INVOICE_STATUS).setValue(invoiceInfo.invoiceStatus || '');
-  sheet.getRange(row, COL.INVOICE_CHECKED_AT).setValue(invoiceInfo.checkedAt || '');
-  sheet.getRange(row, COL.TAX_RATE).setValue(taxInfo.taxRate || '');
-  sheet.getRange(row, COL.TAX_AMOUNT).setValue(taxInfo.taxAmount || '');
-  sheet.getRange(row, COL.INVOICE_NOTE).setValue(invoiceNote);
+  setRowValues(sheet, row, {
+    date: result.date || '',
+    vendor: result.vendor || '',
+    amount: result.amount || '',
+    accountCode: inputRule.accountCode,
+    accountName: inputRule.accountName,
+    status: '読取済',
+    vendorNormalized: vendorOfficialName || '',
+    paymentMethod: result.paymentMethod || '現金',
+    invoiceNumber: invoiceInfo.registrationNumber || '',
+    invoiceJudgement: invoiceInfo.invoiceJudgement || '',
+    invoiceStatus: invoiceInfo.invoiceStatus || '',
+    invoiceCheckedAt: invoiceInfo.checkedAt || '',
+    taxRate: taxInfo.taxRate || '',
+    taxAmount: taxInfo.taxAmount || '',
+    invoiceNote: invoiceNote
+  });
 }
 
 function markReceiptAnalysisError(sheet, row, message) {
-  sheet.getRange(row, COL.STATUS).setValue('エラー：読取失敗');
-  sheet.getRange(row, COL.ERROR).setValue(message);
+  setRowValues(sheet, row, {
+    status: 'エラー：読取失敗',
+    error: message
+  });
 }
 
 function appendCardExpenseRow(sheet, date, vendor, amount, paymentMethod, fileName) {
   const rule = getAccountingRule(vendor);
-  const rowValues = new Array(COL.INVOICE_NOTE).fill('');
-
-  rowValues[COL.TIMESTAMP - 1] = new Date();
-  rowValues[COL.DATE - 1] = date;
-  rowValues[COL.VENDOR - 1] = vendor;
-  rowValues[COL.AMOUNT - 1] = amount;
-  rowValues[COL.ACCOUNT_CODE - 1] = rule.accountCode;
-  rowValues[COL.ACCOUNT_NAME - 1] = rule.accountName;
-  rowValues[COL.STATUS - 1] = 'カード明細取込済';
-  rowValues[COL.VENDOR_NORMALIZED - 1] = rule.vendorName;
-  rowValues[COL.PAYMENT_METHOD - 1] = paymentMethod;
-  rowValues[COL.EVIDENCE_TYPE - 1] = 'カード明細';
-  rowValues[COL.SOURCE_FILE - 1] = fileName;
-  rowValues[COL.CONFIRM - 1] = '未確認';
-  rowValues[COL.SUMMARY_TARGET - 1] = '対象';
+  const rowValues = createExpenseRowValues({
+    timestamp: new Date(),
+    date: date,
+    vendor: vendor,
+    amount: amount,
+    accountCode: rule.accountCode,
+    accountName: rule.accountName,
+    status: 'カード明細取込済',
+    vendorNormalized: rule.vendorName,
+    paymentMethod: paymentMethod,
+    evidenceType: 'カード明細',
+    sourceFile: fileName,
+    confirm: '未確認',
+    summaryTarget: '対象'
+  });
 
   sheet.appendRow(rowValues);
+}
+
+
+function createExpenseRowValues(valuesByName) {
+  const rowValues = new Array(COL.INVOICE_NOTE).fill('');
+  applyNamedValuesToRow(rowValues, valuesByName);
+  return rowValues;
+}
+
+function setRowValues(sheet, row, valuesByName) {
+  Object.keys(valuesByName).forEach(function(name) {
+    sheet.getRange(row, getExpenseColumnByName(name)).setValue(valuesByName[name]);
+  });
+}
+
+function applyNamedValuesToRow(rowValues, valuesByName) {
+  Object.keys(valuesByName).forEach(function(name) {
+    rowValues[getExpenseColumnByName(name) - 1] = valuesByName[name];
+  });
+}
+
+function getExpenseColumnByName(name) {
+  const columns = {
+    timestamp: COL.TIMESTAMP,
+    receiptUrl: COL.RECEIPT_URL,
+    memo: COL.MEMO,
+    date: COL.DATE,
+    vendor: COL.VENDOR,
+    amount: COL.AMOUNT,
+    accountCode: COL.ACCOUNT_CODE,
+    accountName: COL.ACCOUNT_NAME,
+    status: COL.STATUS,
+    fileId: COL.FILE_ID,
+    error: COL.ERROR,
+    vendorNormalized: COL.VENDOR_NORMALIZED,
+    paymentMethod: COL.PAYMENT_METHOD,
+    evidenceType: COL.EVIDENCE_TYPE,
+    sourceFile: COL.SOURCE_FILE,
+    confirm: COL.CONFIRM,
+    inputCategory: COL.INPUT_CATEGORY,
+    duplicate: COL.DUPLICATE,
+    duplicateId: COL.DUPLICATE_ID,
+    summaryTarget: COL.SUMMARY_TARGET,
+    invoiceNumber: COL.INVOICE_NUMBER,
+    invoiceJudgement: COL.INVOICE_JUDGEMENT,
+    invoiceStatus: COL.INVOICE_STATUS,
+    invoiceCheckedAt: COL.INVOICE_CHECKED_AT,
+    taxRate: COL.TAX_RATE,
+    taxAmount: COL.TAX_AMOUNT,
+    invoiceNote: COL.INVOICE_NOTE
+  };
+
+  if (!columns[name]) {
+    throw new Error('未定義の経費台帳列です: ' + name);
+  }
+
+  return columns[name];
 }
