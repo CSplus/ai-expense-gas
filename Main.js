@@ -114,3 +114,35 @@ function uploadReceiptFromWebApp(data) {
     };
   }
 }
+
+/**
+ * Webアプリから領収書画像を受け取り、Drive/Sheetsへ保存せずGemini解析だけを行う
+ */
+function analyzeReceiptFromWebApp(data) {
+  const categoryInput = data.categoryInput;
+  const base64 = data.imageBase64;
+  const mimeType = data.mimeType || 'image/jpeg';
+
+  if (!categoryInput) throw new Error('経費区分が選択されていません。');
+  if (!base64) throw new Error('領収書画像がありません。');
+
+  const result = analyzeReceiptImageWithGemini(base64, mimeType);
+  const taxInfo = normalizeTaxInfo(result);
+
+  return {
+    success: true,
+    date: result.date || '',
+    vendor: result.vendor || '',
+    amount: result.amount || '',
+    inputCategory: categoryInput,
+    category: result.category || '',
+    paymentMethod: result.paymentMethod || '現金',
+    invoiceNumber: result.invoiceNumber || '',
+    invoiceJudgement: result.invoiceJudgement || '',
+    taxRate: taxInfo.taxRate || result.taxRate || '',
+    taxAmount: taxInfo.taxAmount || result.taxAmount || '',
+    taxEstimated: taxInfo.taxEstimated || result.taxEstimated || false,
+    taxNote: taxInfo.taxNote || result.taxNote || '',
+    invoiceNote: result.invoiceNote || ''
+  };
+}
