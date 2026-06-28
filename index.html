@@ -7,13 +7,11 @@
   <style>
     :root {
       --primary: #2F80ED;
-      --primary-dark: #2563EB;
-      --accent: #60A5FA;
-      --text: #1F2937;
-      --muted: #6B7280;
-      --line: #E5EAF2;
-      --card: rgba(255, 255, 255, 0.94);
-      --shadow: 0 22px 60px rgba(47, 128, 237, 0.14), 0 6px 20px rgba(15, 23, 42, 0.08);
+      --text: #172033;
+      --muted: #64748B;
+      --line: #E6ECF4;
+      --card: rgba(255, 255, 255, 0.96);
+      --shadow: 0 22px 56px rgba(47, 128, 237, 0.12), 0 8px 22px rgba(15, 23, 42, 0.07);
     }
 
     * { box-sizing: border-box; }
@@ -21,22 +19,20 @@
     html {
       width: 100%;
       min-height: 100%;
-      background: #F4F9FF;
+      background: #F6FAFF;
     }
 
     body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       width: 100%;
-      margin: 0;
       min-height: 100vh;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 8% 14%, rgba(96, 165, 250, 0.18), transparent 28%),
-        radial-gradient(circle at 92% 8%, rgba(47, 128, 237, 0.11), transparent 32%),
-        linear-gradient(160deg, #F4F9FF 0%, #EAF4FF 48%, #FFFFFF 100%);
-      background-repeat: no-repeat;
-      background-size: cover;
+      margin: 0;
       overflow-x: hidden;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(96, 165, 250, 0.12), transparent 30%),
+        radial-gradient(circle at 90% 6%, rgba(47, 128, 237, 0.08), transparent 34%),
+        linear-gradient(160deg, #F7FBFF 0%, #EDF6FF 48%, #FFFFFF 100%);
     }
 
     body::before,
@@ -44,23 +40,19 @@
       content: "";
       position: fixed;
       inset: 0;
-      pointer-events: none;
       z-index: 0;
+      pointer-events: none;
     }
 
     body::before {
-      background-image: radial-gradient(rgba(47, 128, 237, 0.10) 1.2px, transparent 1.2px);
-      background-size: 14px 14px;
-      background-repeat: repeat;
-      mask-image: linear-gradient(130deg, #000 0 24%, transparent 48%);
+      background-image: radial-gradient(rgba(47, 128, 237, 0.045) 1px, transparent 1px);
+      background-size: 16px 16px;
+      mask-image: linear-gradient(135deg, #000 0 20%, transparent 48%);
     }
 
     body::after {
-      background:
-        repeating-radial-gradient(ellipse at 92% 12%, transparent 0 14px, rgba(96, 165, 250, 0.16) 15px 17px, transparent 18px 28px);
-      background-size: cover;
-      background-repeat: no-repeat;
-      mask-image: linear-gradient(180deg, #000 0 28%, transparent 58%);
+      background: repeating-radial-gradient(ellipse at 88% 8%, transparent 0 18px, rgba(96, 165, 250, 0.075) 19px 20px, transparent 21px 34px);
+      mask-image: linear-gradient(180deg, #000 0 24%, transparent 54%);
     }
 
     .app-shell {
@@ -75,67 +67,52 @@
 
     .app-header {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 44px;
-      gap: 16px;
-      align-items: center;
-      padding: 8px 4px 14px;
+      justify-items: center;
+      text-align: center;
+      padding: 4px 0 18px;
     }
 
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-mark {
-      flex: 0 0 auto;
-      line-height: 0.9;
-      letter-spacing: -0.08em;
-    }
-
-    .brand-main {
+    .brand-logo {
       display: block;
-      font-size: clamp(40px, 12vw, 58px);
-      font-weight: 950;
-      letter-spacing: -0.08em;
-      background: linear-gradient(135deg, #2F80ED, #0F6AD9);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      width: min(148px, 42vw);
+      height: auto;
+      margin: 0 auto;
     }
 
-    .brand-sub {
-      display: block;
-      margin-top: 5px;
-      font-size: 15px;
+    .brand-name {
+      margin-top: 4px;
+      font-size: 18px;
       font-weight: 850;
+      line-height: 1.2;
       letter-spacing: -0.03em;
       color: #111827;
     }
 
-    .header-copy { min-width: 0; }
-
-    .header-copy h1 {
-      margin: 0;
-      font-size: clamp(22px, 6vw, 34px);
-      line-height: 1.15;
-      letter-spacing: -0.04em;
-      font-weight: 900;
+    .app-header h1 {
+      margin: 14px 0 0;
+      font-size: clamp(26px, 7vw, 32px);
+      font-weight: 950;
+      line-height: 1.12;
+      letter-spacing: -0.05em;
+      white-space: nowrap;
     }
 
-    .header-copy p {
-      margin: 7px 0 0;
+    .app-header p {
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.01em;
+      font-size: clamp(14px, 3.6vw, 16px);
+      font-weight: 750;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
     }
 
     .main-card {
-      background: var(--card);
-      border: 1px solid rgba(255, 255, 255, 0.9);
+      width: 100%;
       padding: 18px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
       border-radius: 24px;
+      background: var(--card);
       box-shadow: var(--shadow);
       backdrop-filter: blur(16px);
     }
@@ -147,6 +124,7 @@
       margin-bottom: 16px;
       font-size: 18px;
       font-weight: 900;
+      line-height: 1.35;
       letter-spacing: -0.03em;
     }
 
@@ -157,12 +135,11 @@
       place-items: center;
       flex: 0 0 auto;
       border-radius: 999px;
-      background: #EAF4FF;
       color: var(--primary);
+      background: #EAF4FF;
     }
 
     .title-icon { width: 52px; height: 52px; }
-
     .category-list { display: grid; gap: 10px; }
 
     .category-card {
@@ -171,7 +148,7 @@
       grid-template-columns: 28px 56px 1fr 18px;
       gap: 12px;
       align-items: center;
-      min-height: 76px;
+      min-height: 80px;
       padding: 10px 16px;
       border: 1.5px solid var(--line);
       border-radius: 18px;
@@ -187,7 +164,7 @@
     .category-card.is-selected,
     .category-card:has(input:checked) {
       border-color: var(--primary);
-      background: linear-gradient(135deg, #F0F7FF, #FFFFFF);
+      background: #F0F7FF;
       box-shadow: 0 14px 30px rgba(47, 128, 237, 0.15);
     }
 
@@ -198,12 +175,12 @@
     }
 
     .radio-visual {
+      display: grid;
+      place-items: center;
       width: 26px;
       height: 26px;
       border: 2.5px solid #9CA3AF;
       border-radius: 50%;
-      display: grid;
-      place-items: center;
       color: white;
       transition: all 0.15s ease;
     }
@@ -219,10 +196,10 @@
     .category-card:has(input:checked) .radio-visual svg { opacity: 1; }
 
     .category-icon { width: 52px; height: 52px; }
-    .category-icon.transport { background: #E0F0FF; color: #0B6FD3; }
-    .category-icon.meal { background: #FFF2DA; color: #EA8A00; }
-    .category-icon.fuel { background: #FFE6E9; color: #D13D45; }
-    .category-icon.other { background: #DCFCEB; color: #10A66A; }
+    .category-icon.transport { color: #0B6FD3; background: #E0F0FF; }
+    .category-icon.meal { color: #EA8A00; background: #FFF2DA; }
+    .category-icon.fuel { color: #D13D45; background: #FFE6E9; }
+    .category-icon.other { color: #10A66A; background: #DCFCEB; }
 
     .category-title { font-size: 18px; font-weight: 900; letter-spacing: -0.03em; }
     .chevron { color: #111827; opacity: 0.86; }
@@ -232,7 +209,7 @@
     #mealPurposeArea,
     #memoArea { display: none; margin-top: 18px; }
 
-    .fieldTitle { font-size: 15px; font-weight: 900; margin: 18px 0 8px; color: #374151; }
+    .fieldTitle { margin: 18px 0 8px; color: #374151; font-size: 15px; font-weight: 900; }
 
     select,
     textarea,
@@ -241,13 +218,12 @@
     .confirmField textarea {
       width: 100%;
       padding: 14px 15px;
-      font-size: 16px;
-      box-sizing: border-box;
       border: 1.5px solid #D7DEE9;
       border-radius: 14px;
+      outline: none;
       background: #fff;
       color: var(--text);
-      outline: none;
+      font-size: 16px;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
@@ -261,8 +237,7 @@
     }
 
     textarea { min-height: 110px; resize: vertical; }
-
-    .hint { margin-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .hint { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.55; }
 
     .primary-action-button {
       display: grid;
@@ -272,10 +247,10 @@
       width: 100%;
       margin-top: 18px;
       padding: 17px 20px;
+      border-radius: 20px;
       background: linear-gradient(135deg, #3B82F6, #2563EB);
       color: #fff;
       text-decoration: none;
-      border-radius: 20px;
       box-shadow: 0 18px 34px rgba(37, 99, 235, 0.34);
       cursor: pointer;
       transition: box-shadow 0.2s ease, filter 0.2s ease;
@@ -287,8 +262,7 @@
     .action-subtitle { display: block; margin-top: 4px; font-size: 14px; font-weight: 700; opacity: 0.9; }
 
     #receiptImage { display: none; }
-
-    #fileName { margin-top: 12px; font-size: 13px; color: var(--muted); word-break: break-all; font-weight: 700; text-align: center; }
+    #fileName { margin-top: 12px; color: var(--muted); font-size: 13px; font-weight: 700; text-align: center; word-break: break-all; }
 
     .security-card {
       display: grid;
@@ -298,14 +272,13 @@
       margin-top: 16px;
       padding: 13px;
       border-radius: 18px;
-      background: linear-gradient(135deg, #EFF7FF, #F8FBFF);
       color: #1E5CA8;
+      background: linear-gradient(135deg, #EFF7FF, #F8FBFF);
     }
 
     .security-card .chevron { display: none; }
     .security-icon { width: 42px; height: 42px; background: #DBEDFF; }
     .security-title { font-size: 15px; font-weight: 900; }
-    .security-text { margin-top: 4px; font-size: 12px; color: #334155; font-weight: 650; }
 
     .loading-state {
       display: none;
@@ -333,48 +306,49 @@
     #result {
       margin-top: 18px;
       padding: 14px 16px;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      background: #F8FAFC;
+      color: #334155;
       font-size: 14px;
       line-height: 1.7;
       white-space: pre-line;
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 14px;
-      color: #334155;
     }
 
     #confirmArea {
       display: none;
       margin-top: 22px;
       padding: 18px;
-      background: #FFFBEB;
       border: 1.5px solid #FCD34D;
       border-radius: 20px;
+      background: #FFFBEB;
     }
 
-    .confirmTitle { font-size: 22px; font-weight: 950; margin-bottom: 14px; }
+    .confirmTitle { margin-bottom: 14px; font-size: 22px; font-weight: 950; }
     .confirmGrid { display: grid; gap: 13px; }
-    .confirmField label { display: block; font-size: 13px; font-weight: 850; margin-bottom: 6px; color: #475569; }
-    .saveNotice { margin-top: 16px; font-size: 13px; line-height: 1.55; color: #7C5200; font-weight: 800; }
+    .confirmField label { display: block; margin-bottom: 6px; color: #475569; font-size: 13px; font-weight: 850; }
+    .saveNotice { margin-top: 16px; color: #7C5200; font-size: 13px; font-weight: 800; line-height: 1.55; }
 
     button {
       width: 100%;
       margin-top: 18px;
       padding: 17px 16px;
-      font-size: 18px;
-      font-weight: 900;
-      color: #fff;
-      background: linear-gradient(135deg, #22C55E, #16A34A);
       border: none;
       border-radius: 16px;
+      background: linear-gradient(135deg, #22C55E, #16A34A);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
       box-shadow: 0 12px 24px rgba(22, 163, 74, 0.22);
     }
 
     button:disabled { background: #CBD5E1; color: #64748B; box-shadow: none; }
 
     @media (max-width: 390px) {
-      .app-shell { padding: 14px 12px 20px; }
-      .brand-row { gap: 12px; }
-      .category-card { grid-template-columns: 26px 50px 1fr 16px; padding-inline: 12px; min-height: 70px; }
+      .app-shell { padding: 14px 16px 20px; }
+      .brand-logo { width: 132px; }
+      .app-header { padding-bottom: 16px; }
+      .category-card { grid-template-columns: 26px 50px 1fr 16px; min-height: 80px; padding-inline: 12px; }
       .category-icon { width: 48px; height: 48px; }
       .category-title { font-size: 17px; }
     }
@@ -383,15 +357,11 @@
 
 <body>
   <div class="app-shell">
-    <header class="app-header">
-      <div class="brand-row" aria-label="CS+ Expense AI">
-        <span class="brand-main">CS+</span>
-        <span class="brand-sub">Expense AI</span>
-      </div>
-      <div class="header-copy">
-        <h1>領収書アップロード</h1>
-        <p>AIが領収書を自動解析・自動仕訳</p>
-      </div>
+    <header class="app-header" aria-label="CS+ Expense AI 領収書アップロード">
+      <img class="brand-logo" alt="CS+" src="data:image/png;base64,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">
+      <div class="brand-name">Expense AI</div>
+      <h1>領収書アップロード</h1>
+      <p>AIが領収書を自動解析・仕訳</p>
     </header>
 
     <main class="main-card">
@@ -456,7 +426,7 @@
 
       <label for="receiptImage" class="primary-action-button">
         <span><svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 7.5 9.4 5h5.2L16 7.5h2.5A2.5 2.5 0 0 1 21 10v6.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5V10a2.5 2.5 0 0 1 2.5-2.5H8Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M18 6l.5-1 .5 1 1 .5-1 .5-.5 1-.5-1-1-.5 1-.5Z" fill="currentColor"/></svg></span>
-        <span><span class="action-title">撮影して解析開始</span><span class="action-subtitle">カメラが起動します</span></span>
+        <span><span class="action-title">領収書を撮影</span><span class="action-subtitle">AIで解析を開始します</span></span>
       </label>
 
       <input id="receiptImage" type="file" accept="image/*" capture="environment" onchange="showFileName(); maybeAnalyzeReceipt();">
