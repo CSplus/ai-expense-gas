@@ -2,7 +2,7 @@
 <html>
 <head>
   <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <style>
     :root {
@@ -18,8 +18,15 @@
 
     * { box-sizing: border-box; }
 
+    html {
+      width: 100%;
+      min-height: 100%;
+      background: #F4F9FF;
+    }
+
     body {
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      width: 100%;
       margin: 0;
       min-height: 100vh;
       color: var(--text);
@@ -27,6 +34,8 @@
         radial-gradient(circle at 8% 14%, rgba(96, 165, 250, 0.28), transparent 28%),
         radial-gradient(circle at 92% 8%, rgba(47, 128, 237, 0.18), transparent 32%),
         linear-gradient(160deg, #F4F9FF 0%, #EAF4FF 48%, #FFFFFF 100%);
+      background-repeat: no-repeat;
+      background-size: cover;
       overflow-x: hidden;
     }
 
@@ -42,19 +51,23 @@
     body::before {
       background-image: radial-gradient(rgba(47, 128, 237, 0.18) 1.2px, transparent 1.2px);
       background-size: 14px 14px;
+      background-repeat: repeat;
       mask-image: linear-gradient(130deg, #000 0 24%, transparent 48%);
     }
 
     body::after {
       background:
         repeating-radial-gradient(ellipse at 92% 12%, transparent 0 14px, rgba(96, 165, 250, 0.16) 15px 17px, transparent 18px 28px);
+      background-size: cover;
+      background-repeat: no-repeat;
       mask-image: linear-gradient(180deg, #000 0 28%, transparent 58%);
     }
 
     .app-shell {
       position: relative;
       z-index: 1;
-      width: min(100%, 470px);
+      width: 100%;
+      max-width: 470px;
       min-height: 100vh;
       margin: 0 auto;
       padding: 18px 16px 24px;
@@ -62,7 +75,7 @@
 
     .app-header {
       display: grid;
-      grid-template-columns: auto 48px;
+      grid-template-columns: minmax(0, 1fr) 44px;
       gap: 16px;
       align-items: center;
       padding: 8px 4px 14px;
@@ -75,6 +88,7 @@
     }
 
     .brand-mark {
+      flex: 0 0 auto;
       line-height: 0.9;
       letter-spacing: -0.08em;
     }
@@ -98,9 +112,11 @@
       color: #111827;
     }
 
+    .header-copy { min-width: 0; }
+
     .header-copy h1 {
       margin: 0;
-      font-size: clamp(23px, 6vw, 34px);
+      font-size: clamp(22px, 6vw, 34px);
       line-height: 1.15;
       letter-spacing: -0.04em;
       font-weight: 900;
@@ -176,11 +192,10 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
       cursor: pointer;
       user-select: none;
-      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .category-card:hover { transform: translateY(-1px); }
-    .category-card:active { transform: scale(0.985); }
+    .category-card:hover { box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08); }
 
     .category-card.is-selected,
     .category-card:has(input:checked) {
@@ -212,9 +227,9 @@
       background: var(--primary);
     }
 
-    .radio-visual svg { opacity: 0; transform: scale(0.7); transition: all 0.15s ease; }
+    .radio-visual svg { opacity: 0; transition: opacity 0.15s ease; }
     .category-card.is-selected .radio-visual svg,
-    .category-card:has(input:checked) .radio-visual svg { opacity: 1; transform: scale(1); }
+    .category-card:has(input:checked) .radio-visual svg { opacity: 1; }
 
     .category-icon { width: 52px; height: 52px; }
     .category-icon.transport { background: #E0F0FF; color: #0B6FD3; }
@@ -276,11 +291,11 @@
       border-radius: 20px;
       box-shadow: 0 18px 34px rgba(37, 99, 235, 0.34);
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      transition: box-shadow 0.2s ease, filter 0.2s ease;
     }
 
-    .primary-action-button:hover { filter: brightness(1.04); transform: translateY(-1px); }
-    .primary-action-button:active { transform: scale(0.98); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.26); }
+    .primary-action-button:hover { filter: brightness(1.04); box-shadow: 0 20px 36px rgba(37, 99, 235, 0.34); }
+    .primary-action-button:active { box-shadow: 0 10px 20px rgba(37, 99, 235, 0.26); }
     .action-title { display: block; font-size: 22px; font-weight: 950; letter-spacing: -0.04em; }
     .action-subtitle { display: block; margin-top: 4px; font-size: 14px; font-weight: 700; opacity: 0.9; }
 
