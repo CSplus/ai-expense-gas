@@ -77,24 +77,6 @@
       width: min(148px, 42vw);
       height: auto;
       margin: 0 auto;
-      overflow: visible;
-    }
-
-    .logo-letter,
-    .logo-plus {
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .logo-letter {
-      stroke: #555852;
-      stroke-width: 46;
-    }
-
-    .logo-plus {
-      stroke: #0070C9;
-      stroke-width: 42;
     }
 
     .brand-name {
@@ -376,12 +358,7 @@
 <body>
   <div class="app-shell">
     <header class="app-header" aria-label="CS+ Expense AI 領収書アップロード">
-      <svg class="brand-logo" viewBox="0 0 386 179" role="img" aria-label="CS+" xmlns="http://www.w3.org/2000/svg">
-        <path class="logo-letter" d="M121 23H79C42 23 24 52 24 89.5S42 156 79 156H121" />
-        <path class="logo-letter" d="M249 23H186C162 23 148 36 148 55C148 70 158 79 177 92L211 115C230 128 224 156 195 156H126" />
-        <path class="logo-plus" d="M321 20V153" />
-        <path class="logo-plus" d="M276 86.5H366" />
-      </svg>
+      <img class="brand-logo" alt="CS+" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 96'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%232F80ED'/%3E%3Cstop offset='1' stop-color='%230F6AD9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='4' y='74' fill='url(%23g)' font-family='Inter,Arial,sans-serif' font-size='84' font-weight='900' letter-spacing='-8'%3ECS+%3C/text%3E%3C/svg%3E">
       <div class="brand-name">Expense AI</div>
       <h1>領収書アップロード</h1>
       <p>AIが領収書を自動解析・仕訳</p>
