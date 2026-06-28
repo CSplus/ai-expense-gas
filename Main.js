@@ -9,6 +9,7 @@
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index.html')
     .setTitle('CS+ 経費領収書アップロード')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
