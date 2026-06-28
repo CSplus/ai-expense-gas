@@ -579,6 +579,13 @@
       return selected ? selected.value : '';
     }
 
+    function updateCaptureStatus(state, text) {
+      const fileName = document.getElementById('fileName');
+      fileName.className = 'upload-status';
+      if (state) fileName.classList.add(state);
+      fileName.textContent = text;
+    }
+
     function toggleInputs() {
       const category = getSelectedCategory();
 
@@ -649,11 +656,10 @@
 
     function showFileName() {
       const fileInput = document.getElementById('receiptImage');
-      const fileName = document.getElementById('fileName');
-
-      fileName.textContent = fileInput.files.length
-        ? '撮影済み：' + fileInput.files[0].name
-        : 'まだ撮影されていません';
+      updateCaptureStatus(
+        fileInput.files.length ? 'is-captured' : '',
+        fileInput.files.length ? '✓ 撮影完了：' + fileInput.files[0].name : '○ 撮影待ち'
+      );
       document.getElementById('result').textContent = '';
       document.getElementById('confirmArea').style.display = 'none';
       lastAnalysisKey = '';
@@ -804,7 +810,7 @@
       const reader = new FileReader();
 
       submitButton.disabled = true;
-      result.textContent = 'Drive保存とSheets登録を実行中です。しばらくお待ちください...';
+      result.textContent = 'データ保存と登録を実行中です。しばらくお待ちください...';
 
       reader.onload = function(e) {
         const base64 = e.target.result.split(',')[1];
@@ -815,7 +821,7 @@
               result.textContent = res.message || '登録が完了しました。';
               document.getElementById('confirmArea').style.display = 'none';
               document.getElementById('receiptImage').value = '';
-              document.getElementById('fileName').textContent = 'まだ撮影されていません';
+              updateCaptureStatus('', '○ 撮影待ち');
               updateSendButton();
             } else {
               submitButton.disabled = false;
@@ -824,6 +830,7 @@
           })
           .withFailureHandler(function(err) {
             submitButton.disabled = false;
+            updateCaptureStatus('is-captured', '✓ 撮影完了：再解析できます');
             result.textContent = 'エラー：' + err.message;
           })
           .submitConfirmedReceiptFromWebApp({
@@ -883,8 +890,10 @@
             if (res.success) {
               lastAnalysisKey = analysisKey || '';
               setAnalysisResult(res);
+              updateCaptureStatus('is-analyzed', 'AI解析完了：内容を確認してください');
               result.textContent = '解析結果を確認し、必要に応じて編集してください。まだ保存はされていません。';
             } else {
+              updateCaptureStatus('is-captured', '✓ 撮影完了：再解析できます');
               result.textContent = '読取に失敗しました。\n\n' + res.message;
             }
           })
