@@ -84,7 +84,6 @@
     .brand-row {
       display: flex;
       align-items: center;
-      min-width: 0;
       gap: 14px;
     }
 
@@ -385,12 +384,8 @@
 
     button:disabled { background: #CBD5E1; color: #64748B; box-shadow: none; }
 
-    @media (max-width: 600px) {
-      .app-shell { max-width: none; padding: 16px; }
-    }
-
     @media (max-width: 390px) {
-      .app-shell { padding: 16px; }
+      .app-shell { padding: 14px 12px 20px; }
       .brand-row { gap: 12px; }
       .category-card { grid-template-columns: 26px 50px 1fr 16px; padding-inline: 12px; min-height: 70px; }
       .category-icon { width: 48px; height: 48px; }
