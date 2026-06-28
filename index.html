@@ -31,8 +31,8 @@
       min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(circle at 8% 14%, rgba(96, 165, 250, 0.28), transparent 28%),
-        radial-gradient(circle at 92% 8%, rgba(47, 128, 237, 0.18), transparent 32%),
+        radial-gradient(circle at 8% 14%, rgba(96, 165, 250, 0.18), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(47, 128, 237, 0.11), transparent 32%),
         linear-gradient(160deg, #F4F9FF 0%, #EAF4FF 48%, #FFFFFF 100%);
       background-repeat: no-repeat;
       background-size: cover;
@@ -49,7 +49,7 @@
     }
 
     body::before {
-      background-image: radial-gradient(rgba(47, 128, 237, 0.18) 1.2px, transparent 1.2px);
+      background-image: radial-gradient(rgba(47, 128, 237, 0.10) 1.2px, transparent 1.2px);
       background-size: 14px 14px;
       background-repeat: repeat;
       mask-image: linear-gradient(130deg, #000 0 24%, transparent 48%);
@@ -97,6 +97,7 @@
       display: block;
       font-size: clamp(40px, 12vw, 58px);
       font-weight: 950;
+      letter-spacing: -0.08em;
       background: linear-gradient(135deg, #2F80ED, #0F6AD9);
       -webkit-background-clip: text;
       background-clip: text;
@@ -383,15 +384,13 @@
 <body>
   <div class="app-shell">
     <header class="app-header">
-      <div class="brand-row">
-        <div class="brand-mark" aria-label="CS+ Expense AI">
-          <span class="brand-main">CS+</span>
-          <span class="brand-sub">Expense AI</span>
-        </div>
-        <div class="header-copy">
-          <h1>経費領収書アップロード</h1>
-          <p>AIが領収書を自動解析・自動仕訳</p>
-        </div>
+      <div class="brand-row" aria-label="CS+ Expense AI">
+        <span class="brand-main">CS+</span>
+        <span class="brand-sub">Expense AI</span>
+      </div>
+      <div class="header-copy">
+        <h1>領収書アップロード</h1>
+        <p>AIが領収書を自動解析・自動仕訳</p>
       </div>
     </header>
 
