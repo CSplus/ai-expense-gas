@@ -254,6 +254,7 @@ function createExpenseContext(rows) {
     vendor: 'OCR店舗名',
     vendorNormalized: '取引先名',
     invoiceRegisteredName: 'API正式名称',
+    invoiceAddress: '東京都API区',
     invoiceNumber: 'T1234567890123',
     invoiceStatus: '有効',
     taxRate: '10%',
@@ -265,6 +266,7 @@ function createExpenseContext(rows) {
   assert.strictEqual(sheet.rows[1][11], '取引先名');
   assert.strictEqual(sheet.rows[1][27], 'API正式名称');
   assert.notStrictEqual(sheet.rows[1][27], 'OCR店舗名');
+  assert.strictEqual(sheet.rows[1][35], '東京都API区');
   assert.strictEqual(sheet.rows[1][20], 'T1234567890123');
   assert.strictEqual(sheet.rows[1][31], 'T9999999999999');
   assert.strictEqual(sheet.rows[1][22], '有効');
@@ -282,6 +284,7 @@ function createExpenseContext(rows) {
   assert.strictEqual(cachedExpense.invoiceRegisteredName, '株式会社キャッシュ正式名');
   assert.strictEqual(cachedExpense.invoiceAddress, '東京都');
   assert.strictEqual(cachedExpense.invoiceRegistrationDate, '2023-10-01');
+  assert.strictEqual(cachedExpense.invoiceExpireDate, '');
   assert.strictEqual(cachedExpense.invoiceStatus, '有効');
   assert.notStrictEqual(cachedExpense.invoiceRegisteredName, cachedExpense.vendor);
 
@@ -289,7 +292,11 @@ function createExpenseContext(rows) {
   const first = apiCtx.enrichWithInvoiceInfo({ invoiceNumber: 'T1234567890123', vendor: 'OCR店舗名' });
   const second = apiCtx.enrichWithInvoiceInfo({ invoiceNumber: 'T1234567890123', vendor: 'OCR店舗名' });
   assert.strictEqual(first.invoiceRegisteredName, '株式会社API結果');
+  assert.strictEqual(first.invoiceAddress, '東京都API区');
+  assert.strictEqual(first.invoiceRegistrationDate, '2023-10-01');
+  assert.strictEqual(first.invoiceExpireDate, '');
   assert.strictEqual(second.invoiceRegisteredName, '株式会社API結果');
+  assert.strictEqual(second.invoiceAddress, '東京都API区');
   assert.strictEqual(second.invoiceStatus, '有効');
   assert.notStrictEqual(second.invoiceRegisteredName, second.vendor);
 })();
