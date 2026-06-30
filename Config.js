@@ -42,8 +42,8 @@ const COL = {
   TAX_AMOUNT: 26,      // Z 消費税額
   INVOICE_NOTE: 27,    // AA インボイス備考
   INVOICE_REGISTERED_NAME: 28, // AB インボイス正式名称
-  INVOICE_REGISTRATION_DATE: 29, // AC インボイス登録年月日
-  INVOICE_EXPIRE_DATE: 30, // AD インボイス失効年月日
+  INVOICE_REGISTRATION_DATE: 29, // AC インボイス登録日
+  INVOICE_EXPIRE_DATE: 30, // AD インボイス失効日
   INVOICE_API_ERROR: 31 // AE インボイスAPIエラー
 };
 
