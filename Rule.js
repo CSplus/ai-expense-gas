@@ -3,7 +3,7 @@
  * 勘定科目・取引先正規名ルール
  *************************************************/
 
-function getAccountingRule(vendor) {
+function getAccountingRule(vendor, invoiceNumber, registeredName) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_RULE);
 
@@ -11,8 +11,40 @@ function getAccountingRule(vendor) {
     throw new Error('仕分けルールシートが見つかりません。');
   }
 
+  ensureAccountingRuleInvoiceColumns(sheet);
+
   const values = sheet.getDataRange().getValues();
+  const headers = values[0] || [];
+  const invoiceNumberCol = findHeaderIndex(headers, 'インボイス登録番号');
+  const registeredNameCol = findHeaderIndex(headers, '正式事業者名');
+  const normalizedInvoiceNumber = normalizeInvoiceNumber(invoiceNumber);
+  const targetRegisteredName = String(registeredName || '').toUpperCase().trim();
   const target = String(vendor || '').toUpperCase().trim();
+
+  if (normalizedInvoiceNumber && invoiceNumberCol >= 0) {
+    for (let i = 1; i < values.length; i++) {
+      if (normalizeInvoiceNumber(values[i][invoiceNumberCol]) === normalizedInvoiceNumber) {
+        return {
+          accountCode: values[i][1],
+          accountName: values[i][2],
+          vendorName: values[i][3] || registeredName || vendor
+        };
+      }
+    }
+  }
+
+  if (targetRegisteredName && registeredNameCol >= 0) {
+    for (let i = 1; i < values.length; i++) {
+      const ruleName = String(values[i][registeredNameCol] || '').toUpperCase().trim();
+      if (ruleName && targetRegisteredName === ruleName) {
+        return {
+          accountCode: values[i][1],
+          accountName: values[i][2],
+          vendorName: values[i][3] || registeredName || vendor
+        };
+      }
+    }
+  }
 
   for (let i = 1; i < values.length; i++) {
     const keyword = String(values[i][0] || '').toUpperCase().trim();
@@ -85,4 +117,30 @@ function getAccountingRuleFromInput(categoryInput) {
   }
 
   return getAccountByCode(code);
+}
+
+
+function ensureAccountingRuleInvoiceColumns(sheet) {
+  sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_RULE);
+  if (!sheet) return;
+
+  const requiredHeaders = ['インボイス登録番号', '正式事業者名'];
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(function(v) {
+    return String(v || '').trim();
+  });
+
+  requiredHeaders.forEach(function(header) {
+    if (headers.indexOf(header) === -1) {
+      sheet.getRange(1, headers.length + 1).setValue(header);
+      headers.push(header);
+    }
+  });
+}
+
+function findHeaderIndex(headers, headerName) {
+  for (let i = 0; i < headers.length; i++) {
+    if (String(headers[i] || '').trim() === headerName) return i;
+  }
+  return -1;
 }

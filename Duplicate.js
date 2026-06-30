@@ -30,10 +30,11 @@ function detectDuplicateExpenses() {
     const date = row[COL.DATE - 1];
     const vendor = row[COL.VENDOR_NORMALIZED - 1] || row[COL.VENDOR - 1];
     const amount = row[COL.AMOUNT - 1];
+    const invoiceNumber = normalizeInvoiceNumber(row[COL.INVOICE_NUMBER - 1]);
 
     if (!date || !vendor || !amount) continue;
 
-    const key = formatDuplicateDate(date) + '|' + vendor + '|' + amount;
+    const key = formatDuplicateDate(date) + '|' + vendor + '|' + amount + (invoiceNumber ? '|' + invoiceNumber : '');
     if (!map[key]) map[key] = [];
     map[key].push(i + 2);
   }
