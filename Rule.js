@@ -1,6 +1,6 @@
 /*************************************************
  * Rule.gs
- * 勘定科目・取引先正規名ルール
+ * 勘定科目・インボイス優先ルール
  *************************************************/
 
 function getAccountingRule(vendor, invoiceNumber, registeredName) {
@@ -27,7 +27,7 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
         return {
           accountCode: values[i][1],
           accountName: values[i][2],
-          vendorName: values[i][3] || registeredName || vendor
+          vendorName: registeredName || vendor
         };
       }
     }
@@ -40,7 +40,7 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
         return {
           accountCode: values[i][1],
           accountName: values[i][2],
-          vendorName: values[i][3] || registeredName || vendor
+          vendorName: registeredName || vendor
         };
       }
     }
@@ -54,7 +54,7 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
       return {
         accountCode: values[i][1],
         accountName: values[i][2],
-        vendorName: values[i][3] || vendor
+        vendorName: vendor
       };
     }
   }

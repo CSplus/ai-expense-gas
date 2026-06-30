@@ -9,7 +9,7 @@ function detectDuplicateExpenses() {
   if (lastRow < 2) return;
 
   ensureExpenseInvoiceColumns(sheet);
-  const col = getExpenseColumnsByName(['date', 'vendor', 'vendorNormalized', 'amount', 'invoiceNumber', 'duplicate', 'duplicateId', 'summaryTarget']);
+  const col = getExpenseColumnsByName(['date', 'vendor', 'amount', 'invoiceNumber', 'duplicate', 'duplicateId', 'summaryTarget']);
   const lastColumn = Math.max(sheet.getLastColumn(), getExpenseLastColumn());
   const data = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
   const map = {};
@@ -30,13 +30,13 @@ function detectDuplicateExpenses() {
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     const date = row[col.date - 1];
-    const vendor = row[col.vendorNormalized - 1] || row[col.vendor - 1];
+    const vendor = row[col.vendor - 1];
     const amount = row[col.amount - 1];
     const invoiceNumber = normalizeInvoiceNumber(row[col.invoiceNumber - 1]);
 
     if (!date || !vendor || !amount) continue;
 
-    const key = formatDuplicateDate(date) + '|' + vendor + '|' + amount + (invoiceNumber ? '|' + invoiceNumber : '');
+    const key = (invoiceNumber || '') + '|' + vendor + '|' + amount + '|' + formatDuplicateDate(date);
     if (!map[key]) map[key] = [];
     map[key].push(i + 2);
   }

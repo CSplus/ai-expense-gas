@@ -26,27 +26,26 @@ const COL = {
   STATUS: 9,           // I 処理状態
   FILE_ID: 10,         // J ファイルID
   ERROR: 11,           // K エラー内容
-  VENDOR_NORMALIZED: 12,// L 取引先正規名
-  PAYMENT_METHOD: 13,  // M 支払方法
-  EVIDENCE_TYPE: 14,   // N 証憑種別
-  SOURCE_FILE: 15,     // O 元ファイル名
-  CONFIRM: 16,         // P 確認
-  INPUT_CATEGORY: 17,  // Q 入力区分
-  DUPLICATE: 18,       // R 重複判定
-  DUPLICATE_ID: 19,    // S 重複候補ID
-  SUMMARY_TARGET: 20,  // T 集計対象
-  INVOICE_NUMBER: 21,  // U 登録番号
-  INVOICE_JUDGEMENT: 22,// V インボイス判定
-  INVOICE_STATUS: 23,  // W インボイス登録状態
-  INVOICE_REGISTERED_NAME: 24, // X インボイス正式名称
-  INVOICE_ADDRESS: 25, // Y インボイス住所
-  INVOICE_REGISTRATION_DATE: 26, // Z インボイス登録日
-  INVOICE_EXPIRE_DATE: 27, // AA インボイス失効日
-  INVOICE_CHECKED_AT: 28,// AB インボイス確認日
-  TAX_RATE: 29,        // AC 税率
-  TAX_AMOUNT: 30,      // AD 消費税額
-  INVOICE_NOTE: 31,    // AE インボイス備考
-  INVOICE_API_ERROR: 32 // AF インボイスAPIエラー
+  PAYMENT_METHOD: 12,  // L 支払方法
+  EVIDENCE_TYPE: 13,   // M 証憑種別
+  SOURCE_FILE: 14,     // N 元ファイル名
+  CONFIRM: 15,         // O 確認
+  INPUT_CATEGORY: 16,  // P 入力区分
+  DUPLICATE: 17,       // Q 重複判定
+  DUPLICATE_ID: 18,    // R 重複候補ID
+  SUMMARY_TARGET: 19,  // S 集計対象
+  INVOICE_NUMBER: 20,  // T 登録番号
+  INVOICE_JUDGEMENT: 21,// U インボイス判定
+  INVOICE_STATUS: 22,  // V インボイス登録状態
+  INVOICE_REGISTERED_NAME: 23, // W インボイス正式名称
+  INVOICE_ADDRESS: 24, // X インボイス住所
+  INVOICE_REGISTRATION_DATE: 25, // Y インボイス登録日
+  INVOICE_EXPIRE_DATE: 26, // Z インボイス失効日
+  INVOICE_CHECKED_AT: 27,// AA インボイス確認日
+  TAX_RATE: 28,        // AB 税率
+  TAX_AMOUNT: 29,      // AC 消費税額
+  INVOICE_NOTE: 30,    // AD インボイス備考
+  INVOICE_API_ERROR: 31 // AE インボイスAPIエラー
 };
 
 function getConfig(key) {

@@ -77,12 +77,6 @@ function uploadReceiptFromWebApp(data) {
     // 仕訳ルール取得（インボイス番号・正式名称があれば優先照合）
     const rule = getAccountingRule(result.vendor || '', invoiceInfo.registrationNumber || '', invoiceInfo.officialName || '');
 
-    // OCR店舗名は正式名称で上書きしない。取引先正規名は従来どおり仕訳ルールを優先する。
-    const vendorOfficialName =
-      rule.vendorName ||
-      result.vendor ||
-      '';
-
     // 税率・消費税額の補完
     const taxInfo = normalizeTaxInfo(result);
 
@@ -95,9 +89,8 @@ function uploadReceiptFromWebApp(data) {
 
     updateReceiptAnalysisResult(sheet, row, {
       result: result,
-      inputRule: inputRule,
+      inputRule: rule,
       invoiceInfo: invoiceInfo,
-      vendorOfficialName: vendorOfficialName,
       taxInfo: taxInfo,
       invoiceNote: invoiceNote
     });
@@ -107,12 +100,12 @@ function uploadReceiptFromWebApp(data) {
       date: result.date || '',
       vendor: result.vendor || '',
       amount: result.amount || '',
-      category: inputRule.accountName,
+      category: rule.accountName,
       invoiceNumber: invoiceInfo.registrationNumber || '',
       invoiceJudgement: invoiceInfo.invoiceJudgement || '',
       taxRate: taxInfo.taxRate || '',
       taxAmount: taxInfo.taxAmount || '',
-      officialName: vendorOfficialName
+      officialName: invoiceInfo.officialName || ''
     };
 
   } catch (error) {
@@ -202,10 +195,6 @@ function submitConfirmedReceiptFromWebApp(data) {
     : (invoiceInfo.registrationNumber ? 'ユーザー確認済（API照会済）' : 'ユーザー確認済');
 
   const rule = getAccountingRule(result.vendor || '', invoiceInfo.registrationNumber || '', invoiceInfo.officialName || '');
-  const vendorOfficialName =
-    rule.vendorName ||
-    result.vendor ||
-    '';
   const taxInfo = {
     taxRate: normalizeTaxRateText(result.taxRate),
     taxAmount: result.taxAmount === '' ? '' : Number(result.taxAmount),
@@ -221,9 +210,8 @@ function submitConfirmedReceiptFromWebApp(data) {
 
   updateReceiptAnalysisResult(sheet, row, {
     result: result,
-    inputRule: inputRule,
+    inputRule: rule,
     invoiceInfo: invoiceInfo,
-    vendorOfficialName: vendorOfficialName,
     taxInfo: taxInfo,
     invoiceNote: invoiceNote
   });
