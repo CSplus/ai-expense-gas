@@ -144,14 +144,46 @@ function enrichWithInvoiceInfo(expense) {
 
   const info = fetchInvoiceBusinessInfo(normalized);
   expense.invoiceRegisteredName = info.registeredName || '';
-  expense.invoiceStatus = info.status || '';
+  expense.invoiceAddress = info.address || '';
+  expense.invoiceStatus = getInvoiceStatusDisplayName(info.status);
   expense.invoiceRegistrationDate = info.registrationDate || '';
   expense.invoiceExpireDate = info.expireDate || '';
-  expense.invoiceApiCheckedAt = info.checkedAt || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy/MM/dd HH:mm');
+  expense.invoiceCheckedAt = info.checkedAt || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy/MM/dd HH:mm');
+  expense.invoiceApiCheckedAt = expense.invoiceCheckedAt;
   expense.invoiceApiError = info.errorMessage || info.apiErrorMessage || '';
   expense.invoiceApiRaw = info.raw || '';
 
   return expense;
+}
+
+
+function getInvoiceStatusDisplayName(status) {
+  const value = String(status || '').trim();
+  if (!value) return '未確認';
+
+  const normalized = value.toLowerCase();
+  const statusMap = {
+    '1': '有効',
+    '01': '有効',
+    'found': '有効',
+    '公表': '有効',
+    '有効': '有効',
+    '2': '失効',
+    '02': '失効',
+    '失効': '失効',
+    '3': '取消',
+    '03': '取消',
+    '取消': '取消',
+    'not_found': '登録なし',
+    '登録なし': '登録なし',
+    'invalid_number': '番号不正',
+    '番号不正': '番号不正',
+    'not_configured': '未確認',
+    'api_error': '未確認',
+    'cached': '有効'
+  };
+
+  return statusMap[value] || statusMap[normalized] || value;
 }
 
 function extractInvoiceApiItem(json) {

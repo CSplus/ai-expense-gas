@@ -44,6 +44,7 @@ function updateReceiptAnalysisResult(sheet, row, params) {
     paymentMethod: result.paymentMethod || '現金',
     invoiceNumber: invoiceInfo.registrationNumber || '',
     invoiceRegisteredName: invoiceInfo.officialName || invoiceInfo.registeredName || '',
+    invoiceAddress: invoiceInfo.address || invoiceInfo.invoiceAddress || '',
     invoiceJudgement: invoiceInfo.invoiceJudgement || '',
     invoiceStatus: invoiceInfo.invoiceStatus || '',
     invoiceCheckedAt: invoiceInfo.checkedAt || '',
@@ -103,6 +104,36 @@ function applyNamedValuesToRow(rowValues, valuesByName) {
   });
 }
 
+const EXPENSE_INVOICE_CANONICAL_HEADERS = {
+  invoiceNumber: '登録番号',
+  invoiceJudgement: 'インボイス判定',
+  invoiceStatus: 'インボイス登録状態',
+  invoiceRegisteredName: 'インボイス正式名称',
+  invoiceAddress: 'インボイス住所',
+  invoiceRegistrationDate: 'インボイス登録日',
+  invoiceExpireDate: 'インボイス失効日',
+  invoiceCheckedAt: 'インボイス確認日',
+  taxRate: '税率',
+  taxAmount: '消費税額',
+  invoiceNote: 'インボイス備考',
+  invoiceApiError: 'インボイスAPIエラー'
+};
+
+const EXPENSE_INVOICE_LEGACY_HEADER_ALIASES = {
+  invoiceNumber: ['インボイス登録番号'],
+  invoiceRegistrationDate: ['インボイス登録年月日'],
+  invoiceExpireDate: ['インボイス失効年月日'],
+  invoiceCheckedAt: ['インボイスAPI確認日', 'インボイスAPI確認日時']
+};
+
+const EXPENSE_INVOICE_MIGRATIONS = [
+  { from: 'インボイス登録番号', to: '登録番号' },
+  { from: 'インボイス登録年月日', to: 'インボイス登録日' },
+  { from: 'インボイス失効年月日', to: 'インボイス失効日' },
+  { from: 'インボイスAPI確認日', to: 'インボイス確認日' },
+  { from: 'インボイスAPI確認日時', to: 'インボイス確認日' }
+];
+
 function getExpenseColumnByName(name) {
   const columns = {
     timestamp: COL.TIMESTAMP,
@@ -127,6 +158,7 @@ function getExpenseColumnByName(name) {
     summaryTarget: COL.SUMMARY_TARGET,
     invoiceNumber: COL.INVOICE_NUMBER,
     invoiceRegisteredName: COL.INVOICE_REGISTERED_NAME,
+    invoiceAddress: null,
     invoiceJudgement: COL.INVOICE_JUDGEMENT,
     invoiceStatus: COL.INVOICE_STATUS,
     invoiceCheckedAt: COL.INVOICE_CHECKED_AT,
@@ -138,19 +170,13 @@ function getExpenseColumnByName(name) {
     invoiceNote: COL.INVOICE_NOTE
   };
 
-  const headerLabels = {
-    invoiceNumber: 'インボイス登録番号',
-    invoiceRegisteredName: 'インボイス正式名称',
-    invoiceStatus: 'インボイス登録状態',
-    invoiceRegistrationDate: 'インボイス登録年月日',
-    invoiceExpireDate: 'インボイス失効年月日',
-    invoiceCheckedAt: 'インボイスAPI確認日時',
-    invoiceApiError: 'インボイスAPIエラー'
-  };
-
-  if (headerLabels[name]) {
-    const headerColumn = findExpenseHeaderColumn(headerLabels[name]);
+  if (EXPENSE_INVOICE_CANONICAL_HEADERS[name]) {
+    const headerColumn = findExpenseHeaderColumn(EXPENSE_INVOICE_CANONICAL_HEADERS[name]);
     if (headerColumn) return headerColumn;
+  }
+
+  if (EXPENSE_INVOICE_CANONICAL_HEADERS[name]) {
+    throw new Error('経費台帳に正規列がありません: ' + EXPENSE_INVOICE_CANONICAL_HEADERS[name]);
   }
 
   if (!columns[name]) {
@@ -167,25 +193,50 @@ function getExpenseLastColumn() {
 
 function ensureExpenseInvoiceColumns(sheet) {
   sheet = sheet || getExpenseSheet();
-  const requiredHeaders = [
-    'インボイス登録番号',
-    'インボイス正式名称',
-    'インボイス登録状態',
-    'インボイス登録年月日',
-    'インボイス失効年月日',
-    'インボイスAPI確認日時',
-    'インボイスAPIエラー'
-  ];
   const lastColumn = Math.max(sheet.getLastColumn(), 1);
   const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(function(v) {
     return String(v || '').trim();
   });
 
-  requiredHeaders.forEach(function(header) {
+  Object.keys(EXPENSE_INVOICE_CANONICAL_HEADERS).forEach(function(name) {
+    const header = EXPENSE_INVOICE_CANONICAL_HEADERS[name];
     if (headers.indexOf(header) === -1) {
       sheet.getRange(1, headers.length + 1).setValue(header);
       headers.push(header);
     }
+  });
+
+  migrateExpenseInvoiceLegacyColumns(sheet);
+}
+
+function migrateExpenseInvoiceLegacyColumns(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(function(v) {
+    return String(v || '').trim();
+  });
+
+  EXPENSE_INVOICE_MIGRATIONS.forEach(function(migration) {
+    const fromCol = headers.indexOf(migration.from) + 1;
+    const toCol = headers.indexOf(migration.to) + 1;
+    if (!fromCol || !toCol || fromCol === toCol) return;
+
+    const fromValues = sheet.getRange(2, fromCol, lastRow - 1, 1).getValues();
+    const toRange = sheet.getRange(2, toCol, lastRow - 1, 1);
+    const toValues = toRange.getValues();
+    let changed = false;
+
+    for (let i = 0; i < toValues.length; i++) {
+      if ((toValues[i][0] === '' || toValues[i][0] === null || toValues[i][0] === undefined)
+          && fromValues[i][0] !== '' && fromValues[i][0] !== null && fromValues[i][0] !== undefined) {
+        toValues[i][0] = fromValues[i][0];
+        changed = true;
+      }
+    }
+
+    if (changed) toRange.setValues(toValues);
   });
 }
 
