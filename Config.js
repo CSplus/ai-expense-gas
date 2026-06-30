@@ -1,6 +1,6 @@
 /*************************************************
  * Config.gs
- * 共通設定・シート名・列番号・設定取得
+ * 共通設定・シート名・経費台帳v1.0列定義・設定取得
  *************************************************/
 
 const TIMEZONE = 'Asia/Tokyo';
@@ -11,17 +11,18 @@ const SHEET_CONFIG  = 'システム設定';
 const SHEET_RULE    = '仕分けルール';
 const SHEET_ACCOUNT = '勘定科目マスタ';
 const SHEET_TAX_RATE = '税率マスタ';
+const SHEET_ACCOUNTING_EXPORT_HISTORY = '会計出力履歴';
 
-// 経費台帳の列番号（1始まり）
+// 経費台帳 v1.0 の正式列番号（1始まり）。読み書き時はヘッダー名から列位置を取得する。
 const COL = {
   TIMESTAMP: 1,        // A タイムスタンプ
   RECEIPT_URL: 2,      // B 領収書画像アップロード
-  MEMO: 3,             // C 内容のメモ
+  MEMO: 3,             // C 内容メモ
   DATE: 4,             // D 取引日
   VENDOR: 5,           // E 店舗名
   AMOUNT: 6,           // F 金額
   ACCOUNT_CODE: 7,     // G 勘定科目コード
-  ACCOUNT_NAME: 8,     // H 勘定科目名
+  ACCOUNT_NAME: 8,     // H 勘定科目
   STATUS: 9,           // I 処理状態
   FILE_ID: 10,         // J ファイルID
   ERROR: 11,           // K エラー内容
@@ -37,14 +38,15 @@ const COL = {
   INVOICE_NUMBER: 21,  // U 登録番号
   INVOICE_JUDGEMENT: 22,// V インボイス判定
   INVOICE_STATUS: 23,  // W インボイス登録状態
-  INVOICE_CHECKED_AT: 24,// X インボイス確認日
-  TAX_RATE: 25,        // Y 税率
-  TAX_AMOUNT: 26,      // Z 消費税額
-  INVOICE_NOTE: 27,    // AA インボイス備考
-  INVOICE_REGISTERED_NAME: 28, // AB インボイス正式名称
-  INVOICE_REGISTRATION_DATE: 29, // AC インボイス登録日
-  INVOICE_EXPIRE_DATE: 30, // AD インボイス失効日
-  INVOICE_API_ERROR: 31 // AE インボイスAPIエラー
+  INVOICE_REGISTERED_NAME: 24, // X インボイス正式名称
+  INVOICE_ADDRESS: 25, // Y インボイス住所
+  INVOICE_REGISTRATION_DATE: 26, // Z インボイス登録日
+  INVOICE_EXPIRE_DATE: 27, // AA インボイス失効日
+  INVOICE_CHECKED_AT: 28,// AB インボイス確認日
+  TAX_RATE: 29,        // AC 税率
+  TAX_AMOUNT: 30,      // AD 消費税額
+  INVOICE_NOTE: 31,    // AE インボイス備考
+  INVOICE_API_ERROR: 32 // AF インボイスAPIエラー
 };
 
 function getConfig(key) {

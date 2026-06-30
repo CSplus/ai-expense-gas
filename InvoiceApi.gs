@@ -8,7 +8,7 @@ const NTA_INVOICE_API_URL = 'https://web-api.invoice-kohyo.nta.go.jp/1/num';
 const SHEET_INVOICE_CACHE = 'InvoiceCache';
 const INVOICE_CACHE_MAX_AGE_DAYS = 30;
 const INVOICE_CACHE_HEADERS = [
-  'インボイス登録番号',
+  '登録番号',
   '正式名称',
   '住所',
   '登録状態',
@@ -49,7 +49,7 @@ function fetchInvoiceBusinessInfo(invoiceNumber) {
     return {
       invoiceNumber: '',
       status: 'invalid_number',
-      errorMessage: 'インボイス登録番号が T + 13桁形式ではありません。'
+      errorMessage: '登録番号が T + 13桁形式ではありません。'
     };
   }
 

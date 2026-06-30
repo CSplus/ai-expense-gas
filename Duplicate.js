@@ -8,7 +8,9 @@ function detectDuplicateExpenses() {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return;
 
-  const lastColumn = Math.max(sheet.getLastColumn(), COL.INVOICE_NOTE);
+  ensureExpenseInvoiceColumns(sheet);
+  const col = getExpenseColumnsByName(['date', 'vendor', 'vendorNormalized', 'amount', 'invoiceNumber', 'duplicate', 'duplicateId', 'summaryTarget']);
+  const lastColumn = Math.max(sheet.getLastColumn(), getExpenseLastColumn());
   const data = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
   const map = {};
   let dupNo = 1;
@@ -16,21 +18,21 @@ function detectDuplicateExpenses() {
   // 既存の重複判定を初期化。ただし集計対象は空・保留・対象のみ対象へ戻す。
   for (let i = 0; i < data.length; i++) {
     const rowNo = i + 2;
-    sheet.getRange(rowNo, COL.DUPLICATE).setValue('');
-    sheet.getRange(rowNo, COL.DUPLICATE_ID).setValue('');
+    sheet.getRange(rowNo, col.duplicate).setValue('');
+    sheet.getRange(rowNo, col.duplicateId).setValue('');
 
-    const current = sheet.getRange(rowNo, COL.SUMMARY_TARGET).getValue();
+    const current = sheet.getRange(rowNo, col.summaryTarget).getValue();
     if (current === '' || current === '保留' || current === '対象') {
-      sheet.getRange(rowNo, COL.SUMMARY_TARGET).setValue('対象');
+      sheet.getRange(rowNo, col.summaryTarget).setValue('対象');
     }
   }
 
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
-    const date = row[COL.DATE - 1];
-    const vendor = row[COL.VENDOR_NORMALIZED - 1] || row[COL.VENDOR - 1];
-    const amount = row[COL.AMOUNT - 1];
-    const invoiceNumber = normalizeInvoiceNumber(row[COL.INVOICE_NUMBER - 1]);
+    const date = row[col.date - 1];
+    const vendor = row[col.vendorNormalized - 1] || row[col.vendor - 1];
+    const amount = row[col.amount - 1];
+    const invoiceNumber = normalizeInvoiceNumber(row[col.invoiceNumber - 1]);
 
     if (!date || !vendor || !amount) continue;
 
@@ -46,9 +48,9 @@ function detectDuplicateExpenses() {
     const dupId = 'DUP' + Utilities.formatString('%04d', dupNo++);
 
     rows.forEach(rowNo => {
-      sheet.getRange(rowNo, COL.DUPLICATE).setValue('重複候補');
-      sheet.getRange(rowNo, COL.DUPLICATE_ID).setValue(dupId);
-      sheet.getRange(rowNo, COL.SUMMARY_TARGET).setValue('保留');
+      sheet.getRange(rowNo, col.duplicate).setValue('重複候補');
+      sheet.getRange(rowNo, col.duplicateId).setValue(dupId);
+      sheet.getRange(rowNo, col.summaryTarget).setValue('保留');
     });
   });
 }

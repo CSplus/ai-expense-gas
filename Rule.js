@@ -15,7 +15,7 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
 
   const values = sheet.getDataRange().getValues();
   const headers = values[0] || [];
-  const invoiceNumberCol = findHeaderIndex(headers, 'インボイス登録番号');
+  const invoiceNumberCol = findHeaderIndex(headers, '登録番号');
   const registeredNameCol = findHeaderIndex(headers, '正式事業者名');
   const normalizedInvoiceNumber = normalizeInvoiceNumber(invoiceNumber);
   const targetRegisteredName = String(registeredName || '').toUpperCase().trim();
@@ -124,7 +124,7 @@ function ensureAccountingRuleInvoiceColumns(sheet) {
   sheet = sheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_RULE);
   if (!sheet) return;
 
-  const requiredHeaders = ['インボイス登録番号', '正式事業者名'];
+  const requiredHeaders = ['登録番号', '正式事業者名'];
   const lastColumn = Math.max(sheet.getLastColumn(), 1);
   const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(function(v) {
     return String(v || '').trim();

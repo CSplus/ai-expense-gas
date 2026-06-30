@@ -14,6 +14,8 @@ function createMonthlySummaryFor(year, month) {
   const summarySheet = getSummarySheet();
   summarySheet.clear();
 
+  ensureExpenseInvoiceColumns(expenseSheet);
+  const col = getExpenseColumnsByName(['date', 'vendor', 'vendorNormalized', 'amount', 'accountName', 'status', 'confirm', 'duplicate', 'duplicateId', 'summaryTarget']);
   const values = expenseSheet.getDataRange().getValues();
   const summary = {};
   const excludedRows = [];
@@ -23,18 +25,18 @@ function createMonthlySummaryFor(year, month) {
 
   for (let i = 1; i < values.length; i++) {
     const row = values[i];
-    const date = toDate(row[COL.DATE - 1]);
+    const date = toDate(row[col.date - 1]);
     if (!date) continue;
     if (date < start || date >= end) continue;
 
-    const vendor = row[COL.VENDOR_NORMALIZED - 1] || row[COL.VENDOR - 1];
-    const amount = Number(row[COL.AMOUNT - 1]);
-    const category = row[COL.ACCOUNT_NAME - 1] || 'その他';
-    const status = row[COL.STATUS - 1];
-    const confirm = row[COL.CONFIRM - 1] || '未確認';
-    const duplicate = row[COL.DUPLICATE - 1] || '';
-    const duplicateId = row[COL.DUPLICATE_ID - 1] || '';
-    const summaryTarget = row[COL.SUMMARY_TARGET - 1] || '対象';
+    const vendor = row[col.vendorNormalized - 1] || row[col.vendor - 1];
+    const amount = Number(row[col.amount - 1]);
+    const category = row[col.accountName - 1] || 'その他';
+    const status = row[col.status - 1];
+    const confirm = row[col.confirm - 1] || '未確認';
+    const duplicate = row[col.duplicate - 1] || '';
+    const duplicateId = row[col.duplicateId - 1] || '';
+    const summaryTarget = row[col.summaryTarget - 1] || '対象';
 
     if (!amount) continue;
 
