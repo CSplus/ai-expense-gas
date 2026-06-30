@@ -58,6 +58,9 @@ function createSheet(initialRows) {
     },
     appendRow(row) {
       rows.push(row.slice());
+    },
+    deleteColumn(col) {
+      rows.forEach((row) => row.splice(col - 1, 1));
     }
   };
 }
@@ -231,28 +234,27 @@ function createExpenseContext(rows) {
 (function expenseColumnsUseV10CanonicalHeaders() {
   const baseHeaders = [
     'タイムスタンプ', '領収書画像アップロード', '内容メモ', '取引日', '店舗名', '金額',
-    '勘定科目コード', '勘定科目', '処理状態', 'ファイルID', 'エラー内容', '取引先正規名',
+    '勘定科目コード', '勘定科目', '処理状態', 'ファイルID', 'エラー内容',
     '支払方法', '証憑種別', '元ファイル名', '確認', '入力区分', '重複判定', '重複候補ID', '集計対象',
     '登録番号', 'インボイス判定', 'インボイス登録状態', 'インボイス正式名称', 'インボイス住所',
     'インボイス登録日', 'インボイス失効日', 'インボイス確認日', '税率', '消費税額',
     'インボイス備考', 'インボイスAPIエラー'
   ];
   const row = new Array(baseHeaders.length).fill('');
-  row[20] = 'T9999999999999';
-  row[25] = '2023/10/01';
-  row[26] = '2024/10/01';
-  row[27] = '2026/06/30 12:00';
+  row[19] = 'T9999999999999';
+  row[24] = '2023/10/01';
+  row[25] = '2024/10/01';
+  row[26] = '2026/06/30 12:00';
   const { ctx, sheet } = createExpenseContext([baseHeaders, row]);
 
   ctx.ensureExpenseInvoiceColumns(sheet);
-  assert.strictEqual(sheet.rows[1][20], 'T9999999999999');
-  assert.strictEqual(sheet.rows[1][25], '2023/10/01');
-  assert.strictEqual(sheet.rows[1][26], '2024/10/01');
-  assert.strictEqual(sheet.rows[1][27], '2026/06/30 12:00');
+  assert.strictEqual(sheet.rows[1][19], 'T9999999999999');
+  assert.strictEqual(sheet.rows[1][24], '2023/10/01');
+  assert.strictEqual(sheet.rows[1][25], '2024/10/01');
+  assert.strictEqual(sheet.rows[1][26], '2026/06/30 12:00');
 
   ctx.setRowValues(sheet, 2, {
     vendor: 'OCR店舗名',
-    vendorNormalized: '取引先名',
     invoiceRegisteredName: 'API正式名称',
     invoiceAddress: '東京都API区',
     invoiceNumber: 'T1234567890123',
@@ -263,15 +265,14 @@ function createExpenseContext(rows) {
   });
 
   assert.strictEqual(sheet.rows[1][4], 'OCR店舗名');
-  assert.strictEqual(sheet.rows[1][11], '取引先名');
-  assert.strictEqual(sheet.rows[1][23], 'API正式名称');
-  assert.notStrictEqual(sheet.rows[1][23], 'OCR店舗名');
-  assert.strictEqual(sheet.rows[1][24], '東京都API区');
-  assert.strictEqual(sheet.rows[1][20], 'T1234567890123');
-  assert.strictEqual(sheet.rows[1][22], '有効');
-  assert.strictEqual(sheet.rows[1][28], '10%');
-  assert.strictEqual(sheet.rows[1][29], 100);
-  assert.strictEqual(sheet.rows[1][17], '重複なし');
+  assert.strictEqual(sheet.rows[1][22], 'API正式名称');
+  assert.notStrictEqual(sheet.rows[1][22], 'OCR店舗名');
+  assert.strictEqual(sheet.rows[1][23], '東京都API区');
+  assert.strictEqual(sheet.rows[1][19], 'T1234567890123');
+  assert.strictEqual(sheet.rows[1][21], '有効');
+  assert.strictEqual(sheet.rows[1][27], '10%');
+  assert.strictEqual(sheet.rows[1][28], 100);
+  assert.strictEqual(sheet.rows[1][16], '重複なし');
 })();
 
 (function enrichMapsCacheAndApiNamesAndDisplayStatus() {
@@ -301,3 +302,40 @@ function createExpenseContext(rows) {
 })();
 
 console.log('InvoiceApi cache and expense sheet mapping tests passed');
+
+function createRuleContext(ruleRows) {
+  const sheet = createSheet(ruleRows);
+  sheet.getDataRange = function() {
+    return this.getRange(1, 1, this.getLastRow(), this.getLastColumn());
+  };
+  const ctx = {
+    SHEET_RULE: '仕分けルール',
+    SpreadsheetApp: {
+      getActiveSpreadsheet() {
+        return {
+          getSheetByName(name) {
+            return name === '仕分けルール' ? sheet : null;
+          }
+        };
+      }
+    },
+    console
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync('InvoiceApi.gs', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('Rule.js', 'utf8'), ctx);
+  return { ctx, sheet };
+}
+
+(function accountingRulePriorityUsesInvoiceNumberThenRegisteredNameThenStoreName() {
+  const { ctx } = createRuleContext([
+    ['キーワード', '勘定科目コード', '勘定科目', '旧正式名', '登録番号', '正式事業者名'],
+    ['OCR店舗', 1111, '店舗名一致', '使わない', '', ''],
+    ['別店舗', 2222, '登録番号一致', '使わない', 'T1234567890123', ''],
+    ['別店舗', 3333, '正式名称一致', '使わない', '', '株式会社API正式名']
+  ]);
+
+  assert.strictEqual(ctx.getAccountingRule('OCR店舗', 'T1234567890123', '株式会社API正式名').accountName, '登録番号一致');
+  assert.strictEqual(ctx.getAccountingRule('該当なし', '', '株式会社API正式名').accountName, '正式名称一致');
+  assert.strictEqual(ctx.getAccountingRule('OCR店舗', '', '').accountName, '店舗名一致');
+})();

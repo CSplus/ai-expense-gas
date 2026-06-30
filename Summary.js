@@ -15,7 +15,7 @@ function createMonthlySummaryFor(year, month) {
   summarySheet.clear();
 
   ensureExpenseInvoiceColumns(expenseSheet);
-  const col = getExpenseColumnsByName(['date', 'vendor', 'vendorNormalized', 'amount', 'accountName', 'status', 'confirm', 'duplicate', 'duplicateId', 'summaryTarget']);
+  const col = getExpenseColumnsByName(['date', 'vendor', 'amount', 'accountName', 'status', 'confirm', 'duplicate', 'duplicateId', 'summaryTarget']);
   const values = expenseSheet.getDataRange().getValues();
   const summary = {};
   const excludedRows = [];
@@ -29,7 +29,7 @@ function createMonthlySummaryFor(year, month) {
     if (!date) continue;
     if (date < start || date >= end) continue;
 
-    const vendor = row[col.vendorNormalized - 1] || row[col.vendor - 1];
+    const vendor = row[col.vendor - 1];
     const amount = Number(row[col.amount - 1]);
     const category = row[col.accountName - 1] || 'その他';
     const status = row[col.status - 1];

@@ -29,7 +29,6 @@ function updateReceiptAnalysisResult(sheet, row, params) {
   const result = params.result;
   const inputRule = params.inputRule;
   const invoiceInfo = params.invoiceInfo;
-  const vendorOfficialName = params.vendorOfficialName;
   const taxInfo = params.taxInfo || {};
   const invoiceNote = params.invoiceNote || invoiceInfo.note || result.invoiceNote || '';
 
@@ -40,7 +39,6 @@ function updateReceiptAnalysisResult(sheet, row, params) {
     accountCode: inputRule.accountCode,
     accountName: inputRule.accountName,
     status: '読取済',
-    vendorNormalized: vendorOfficialName || '',
     paymentMethod: result.paymentMethod || '現金',
     invoiceNumber: invoiceInfo.registrationNumber || '',
     invoiceRegisteredName: invoiceInfo.officialName || invoiceInfo.registeredName || '',
@@ -74,7 +72,6 @@ function appendCardExpenseRow(sheet, date, vendor, amount, paymentMethod, fileNa
     accountCode: rule.accountCode,
     accountName: rule.accountName,
     status: 'カード明細取込済',
-    vendorNormalized: rule.vendorName,
     paymentMethod: paymentMethod,
     evidenceType: 'カード明細',
     sourceFile: fileName,
@@ -116,7 +113,6 @@ const EXPENSE_CANONICAL_HEADERS = {
   status: '処理状態',
   fileId: 'ファイルID',
   error: 'エラー内容',
-  vendorNormalized: '取引先正規名',
   paymentMethod: '支払方法',
   evidenceType: '証憑種別',
   sourceFile: '元ファイル名',
@@ -141,7 +137,7 @@ const EXPENSE_CANONICAL_HEADERS = {
 
 const EXPENSE_HEADER_ORDER = [
   'timestamp', 'receiptUrl', 'memo', 'date', 'vendor', 'amount',
-  'accountCode', 'accountName', 'status', 'fileId', 'error', 'vendorNormalized',
+  'accountCode', 'accountName', 'status', 'fileId', 'error',
   'paymentMethod', 'evidenceType', 'sourceFile', 'confirm', 'inputCategory',
   'duplicate', 'duplicateId', 'summaryTarget', 'invoiceNumber', 'invoiceJudgement',
   'invoiceStatus', 'invoiceRegisteredName', 'invoiceAddress', 'invoiceRegistrationDate',
@@ -178,6 +174,7 @@ function getExpenseLastColumn() {
 
 function ensureExpenseInvoiceColumns(sheet) {
   sheet = sheet || getExpenseSheet();
+  removeDeprecatedExpenseColumn(sheet, '取引先正規名');
   const requiredHeaders = EXPENSE_HEADER_ORDER.map(function(name) {
     return EXPENSE_CANONICAL_HEADERS[name];
   });
@@ -210,4 +207,18 @@ function findExpenseHeaderColumn(headerName) {
     if (String(headers[i] || '').trim() === headerName) return i + 1;
   }
   return null;
+}
+
+function removeDeprecatedExpenseColumn(sheet, headerName) {
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  for (let i = headers.length - 1; i >= 0; i--) {
+    if (String(headers[i] || '').trim() === headerName) {
+      if (typeof sheet.deleteColumn === 'function') {
+        sheet.deleteColumn(i + 1);
+      } else {
+        sheet.getRange(1, i + 1).setValue('');
+      }
+    }
+  }
 }
