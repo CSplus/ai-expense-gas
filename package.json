@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "CardImport.js",
-"scripts": {
-  "test": "echo \"Error: no test specified\" && exit 1",
-  "push": "clasp.cmd push",
-  "pull": "clasp.cmd pull",
-  "open": "clasp.cmd open"
-},
+  "scripts": {
+    "test": "node test/InvoiceApiCache.test.js && node test/SheetInvoiceColumns.test.js",
+    "push": "clasp.cmd push",
+    "pull": "clasp.cmd pull",
+    "open": "clasp.cmd open"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CSplus/ai-expense-gas.git"

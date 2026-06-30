@@ -40,7 +40,12 @@ const COL = {
   INVOICE_CHECKED_AT: 24,// X インボイス確認日
   TAX_RATE: 25,        // Y 税率
   TAX_AMOUNT: 26,      // Z 消費税額
-  INVOICE_NOTE: 27     // AA インボイス備考
+  INVOICE_NOTE: 27,    // AA インボイス備考
+  INVOICE_REGISTERED_NAME: 28, // AB インボイス正式名称
+  INVOICE_ADDRESS: 29, // AC インボイス住所
+  INVOICE_REGISTRATION_DATE: 30, // AD インボイス登録日
+  INVOICE_EXPIRE_DATE: 31, // AE インボイス失効日
+  INVOICE_API_ERROR: 32 // AF インボイスAPIエラー
 };
 
 function getConfig(key) {

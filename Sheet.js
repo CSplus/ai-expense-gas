@@ -4,6 +4,7 @@
  *************************************************/
 
 function appendInitialReceiptRow(sheet, params) {
+  ensureExpenseInvoiceColumns(sheet);
   const rowValues = createExpenseRowValues({
     timestamp: params.now,
     receiptUrl: params.fileUrl,
@@ -24,6 +25,7 @@ function appendInitialReceiptRow(sheet, params) {
 }
 
 function updateReceiptAnalysisResult(sheet, row, params) {
+  ensureExpenseInvoiceColumns(sheet);
   const result = params.result;
   const inputRule = params.inputRule;
   const invoiceInfo = params.invoiceInfo;
@@ -41,9 +43,14 @@ function updateReceiptAnalysisResult(sheet, row, params) {
     vendorNormalized: vendorOfficialName || '',
     paymentMethod: result.paymentMethod || '現金',
     invoiceNumber: invoiceInfo.registrationNumber || '',
+    invoiceRegisteredName: invoiceInfo.officialName || invoiceInfo.registeredName || '',
+    invoiceAddress: invoiceInfo.address || '',
     invoiceJudgement: invoiceInfo.invoiceJudgement || '',
     invoiceStatus: invoiceInfo.invoiceStatus || '',
     invoiceCheckedAt: invoiceInfo.checkedAt || '',
+    invoiceRegistrationDate: invoiceInfo.registrationDate || '',
+    invoiceExpireDate: invoiceInfo.expireDate || '',
+    invoiceApiError: invoiceInfo.apiError || '',
     taxRate: taxInfo.taxRate || '',
     taxAmount: taxInfo.taxAmount || '',
     invoiceNote: invoiceNote
@@ -80,7 +87,7 @@ function appendCardExpenseRow(sheet, date, vendor, amount, paymentMethod, fileNa
 
 
 function createExpenseRowValues(valuesByName) {
-  const rowValues = new Array(COL.INVOICE_NOTE).fill('');
+  const rowValues = new Array(getExpenseLastColumn()).fill('');
   applyNamedValuesToRow(rowValues, valuesByName);
   return rowValues;
 }
@@ -120,17 +127,92 @@ function getExpenseColumnByName(name) {
     duplicateId: COL.DUPLICATE_ID,
     summaryTarget: COL.SUMMARY_TARGET,
     invoiceNumber: COL.INVOICE_NUMBER,
+    invoiceRegisteredName: COL.INVOICE_REGISTERED_NAME,
+    invoiceAddress: COL.INVOICE_ADDRESS,
     invoiceJudgement: COL.INVOICE_JUDGEMENT,
     invoiceStatus: COL.INVOICE_STATUS,
     invoiceCheckedAt: COL.INVOICE_CHECKED_AT,
+    invoiceRegistrationDate: COL.INVOICE_REGISTRATION_DATE,
+    invoiceExpireDate: COL.INVOICE_EXPIRE_DATE,
+    invoiceApiError: COL.INVOICE_API_ERROR,
     taxRate: COL.TAX_RATE,
     taxAmount: COL.TAX_AMOUNT,
     invoiceNote: COL.INVOICE_NOTE
   };
+
+  const headerLabels = {
+    invoiceNumber: ['登録番号', 'インボイス登録番号'],
+    invoiceRegisteredName: 'インボイス正式名称',
+    invoiceAddress: 'インボイス住所',
+    invoiceJudgement: 'インボイス判定',
+    invoiceStatus: 'インボイス登録状態',
+    invoiceRegistrationDate: ['インボイス登録日', 'インボイス登録年月日'],
+    invoiceExpireDate: ['インボイス失効日', 'インボイス失効年月日'],
+    invoiceCheckedAt: ['インボイス確認日', 'インボイスAPI確認日時'],
+    invoiceApiError: 'インボイスAPIエラー',
+    taxRate: '税率',
+    taxAmount: '消費税額',
+    invoiceNote: 'インボイス備考'
+  };
+
+  if (headerLabels[name]) {
+    const labels = Array.isArray(headerLabels[name]) ? headerLabels[name] : [headerLabels[name]];
+    for (let i = 0; i < labels.length; i++) {
+      const headerColumn = findExpenseHeaderColumn(labels[i]);
+      if (headerColumn) return headerColumn;
+    }
+  }
 
   if (!columns[name]) {
     throw new Error('未定義の経費台帳列です: ' + name);
   }
 
   return columns[name];
+}
+
+
+function getExpenseLastColumn() {
+  return Math.max(COL.INVOICE_API_ERROR, getExpenseSheet().getLastColumn());
+}
+
+function ensureExpenseInvoiceColumns(sheet) {
+  sheet = sheet || getExpenseSheet();
+  const requiredHeaderGroups = [
+    ['登録番号', 'インボイス登録番号'],
+    ['インボイス判定'],
+    ['インボイス登録状態'],
+    ['インボイス正式名称'],
+    ['インボイス住所'],
+    ['インボイス登録日', 'インボイス登録年月日'],
+    ['インボイス失効日', 'インボイス失効年月日'],
+    ['インボイス確認日', 'インボイスAPI確認日時'],
+    ['税率'],
+    ['消費税額'],
+    ['インボイス備考'],
+    ['インボイスAPIエラー']
+  ];
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(function(v) {
+    return String(v || '').trim();
+  });
+
+  requiredHeaderGroups.forEach(function(group) {
+    const exists = group.some(function(header) {
+      return headers.indexOf(header) !== -1;
+    });
+    if (!exists) {
+      sheet.getRange(1, headers.length + 1).setValue(group[0]);
+      headers.push(group[0]);
+    }
+  });
+}
+
+function findExpenseHeaderColumn(headerName) {
+  const sheet = getExpenseSheet();
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  for (let i = 0; i < headers.length; i++) {
+    if (String(headers[i] || '').trim() === headerName) return i + 1;
+  }
+  return null;
 }
