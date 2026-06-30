@@ -143,11 +143,11 @@ function enrichWithInvoiceInfo(expense) {
   if (!normalized) return expense;
 
   const info = fetchInvoiceBusinessInfo(normalized);
-  expense.invoiceRegisteredName = info.registeredName || '';
-  expense.invoiceAddress = info.address || '';
+  expense.invoiceRegisteredName = info.registeredName;
+  expense.invoiceAddress = info.address;
   expense.invoiceStatus = getInvoiceStatusDisplayName(info.status);
-  expense.invoiceRegistrationDate = info.registrationDate || '';
-  expense.invoiceExpireDate = info.expireDate || '';
+  expense.invoiceRegistrationDate = info.registrationDate;
+  expense.invoiceExpireDate = info.expireDate;
   expense.invoiceCheckedAt = info.checkedAt || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy/MM/dd HH:mm');
   expense.invoiceApiCheckedAt = expense.invoiceCheckedAt;
   expense.invoiceApiError = info.errorMessage || info.apiErrorMessage || '';

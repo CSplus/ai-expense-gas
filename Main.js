@@ -66,6 +66,7 @@ function uploadReceiptFromWebApp(data) {
     });
     invoiceInfo.registrationNumber = enrichedExpense.invoiceNumber || invoiceInfo.registrationNumber || '';
     invoiceInfo.officialName = enrichedExpense.invoiceRegisteredName || '';
+    invoiceInfo.address = enrichedExpense.invoiceAddress || '';
     invoiceInfo.invoiceStatus = enrichedExpense.invoiceStatus || invoiceInfo.invoiceStatus || '';
     invoiceInfo.registrationDate = enrichedExpense.invoiceRegistrationDate || '';
     invoiceInfo.expireDate = enrichedExpense.invoiceExpireDate || '';
@@ -190,6 +191,7 @@ function submitConfirmedReceiptFromWebApp(data) {
   });
   invoiceInfo.registrationNumber = enrichedExpense.invoiceNumber || invoiceInfo.registrationNumber || '';
   invoiceInfo.officialName = enrichedExpense.invoiceRegisteredName || '';
+  invoiceInfo.address = enrichedExpense.invoiceAddress || '';
   invoiceInfo.invoiceStatus = enrichedExpense.invoiceStatus || invoiceInfo.invoiceStatus || '';
   invoiceInfo.registrationDate = enrichedExpense.invoiceRegistrationDate || '';
   invoiceInfo.expireDate = enrichedExpense.invoiceExpireDate || '';
