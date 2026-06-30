@@ -129,7 +129,7 @@ function errorResponse() {
   };
 }
 
-const headers = ['インボイス登録番号', '正式名称', '住所', '登録状態', '登録日', '失効日', '最終確認日', 'Version'];
+const headers = ['登録番号', '正式名称', '住所', '登録状態', '登録日', '失効日', '最終確認日', 'Version'];
 
 (function freshVersionOneCacheSkipsApi() {
   const { ctx, getFetchCalls } = createContext({
@@ -228,27 +228,27 @@ function createExpenseContext(rows) {
   return { ctx, sheet };
 }
 
-(function expenseColumnsPreferCanonicalAndMigrateLegacyValues() {
+(function expenseColumnsUseV10CanonicalHeaders() {
   const baseHeaders = [
-    'タイムスタンプ', '領収書画像アップロード', '内容のメモ', '取引日', '店舗名', '金額',
-    '勘定科目コード', '勘定科目名', '処理状態', 'ファイルID', 'エラー内容', '取引先正規名',
+    'タイムスタンプ', '領収書画像アップロード', '内容メモ', '取引日', '店舗名', '金額',
+    '勘定科目コード', '勘定科目', '処理状態', 'ファイルID', 'エラー内容', '取引先正規名',
     '支払方法', '証憑種別', '元ファイル名', '確認', '入力区分', '重複判定', '重複候補ID', '集計対象',
-    '登録番号', 'インボイス判定', 'インボイス登録状態', 'インボイス確認日', '税率', '消費税額',
-    'インボイス備考', 'インボイス正式名称', 'インボイス登録日', 'インボイス失効日', 'インボイスAPIエラー',
-    'インボイス登録番号', 'インボイス登録年月日', 'インボイス失効年月日', 'インボイスAPI確認日'
+    '登録番号', 'インボイス判定', 'インボイス登録状態', 'インボイス正式名称', 'インボイス住所',
+    'インボイス登録日', 'インボイス失効日', 'インボイス確認日', '税率', '消費税額',
+    'インボイス備考', 'インボイスAPIエラー'
   ];
   const row = new Array(baseHeaders.length).fill('');
-  row[31] = 'T9999999999999';
-  row[32] = '2023/10/01';
-  row[33] = '2024/10/01';
-  row[34] = '2026/06/30 12:00';
+  row[20] = 'T9999999999999';
+  row[25] = '2023/10/01';
+  row[26] = '2024/10/01';
+  row[27] = '2026/06/30 12:00';
   const { ctx, sheet } = createExpenseContext([baseHeaders, row]);
 
   ctx.ensureExpenseInvoiceColumns(sheet);
   assert.strictEqual(sheet.rows[1][20], 'T9999999999999');
-  assert.strictEqual(sheet.rows[1][28], '2023/10/01');
-  assert.strictEqual(sheet.rows[1][29], '2024/10/01');
-  assert.strictEqual(sheet.rows[1][23], '2026/06/30 12:00');
+  assert.strictEqual(sheet.rows[1][25], '2023/10/01');
+  assert.strictEqual(sheet.rows[1][26], '2024/10/01');
+  assert.strictEqual(sheet.rows[1][27], '2026/06/30 12:00');
 
   ctx.setRowValues(sheet, 2, {
     vendor: 'OCR店舗名',
@@ -264,14 +264,13 @@ function createExpenseContext(rows) {
 
   assert.strictEqual(sheet.rows[1][4], 'OCR店舗名');
   assert.strictEqual(sheet.rows[1][11], '取引先名');
-  assert.strictEqual(sheet.rows[1][27], 'API正式名称');
-  assert.notStrictEqual(sheet.rows[1][27], 'OCR店舗名');
-  assert.strictEqual(sheet.rows[1][35], '東京都API区');
+  assert.strictEqual(sheet.rows[1][23], 'API正式名称');
+  assert.notStrictEqual(sheet.rows[1][23], 'OCR店舗名');
+  assert.strictEqual(sheet.rows[1][24], '東京都API区');
   assert.strictEqual(sheet.rows[1][20], 'T1234567890123');
-  assert.strictEqual(sheet.rows[1][31], 'T9999999999999');
   assert.strictEqual(sheet.rows[1][22], '有効');
-  assert.strictEqual(sheet.rows[1][24], '10%');
-  assert.strictEqual(sheet.rows[1][25], 100);
+  assert.strictEqual(sheet.rows[1][28], '10%');
+  assert.strictEqual(sheet.rows[1][29], 100);
   assert.strictEqual(sheet.rows[1][17], '重複なし');
 })();
 
