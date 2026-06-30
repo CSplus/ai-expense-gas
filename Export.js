@@ -78,3 +78,16 @@ function findRowByText(sheet, text) {
 
   return null;
 }
+
+/**
+ * TKC FX2 仕訳明細のAU列（47列目）に登録番号を設定するためのヘルパー。
+ * 既存のFX2出力実装へ組み込む際は、仕訳明細配列を47列以上にし、
+ * この関数で T + 13桁形式の登録番号のみを AU 列へ出力する。
+ * TODO: FX2仕訳明細テキスト出力本体の実装時に、税区分マスタ参照とあわせて呼び出す。
+ */
+function applyFx2InvoiceNumberToJournalRow(rowValues, invoiceNumber) {
+  const normalized = normalizeInvoiceNumber(invoiceNumber);
+  while (rowValues.length < 47) rowValues.push('');
+  rowValues[46] = normalized || '';
+  return rowValues;
+}

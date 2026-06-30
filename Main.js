@@ -57,19 +57,27 @@ function uploadReceiptFromWebApp(data) {
 
     Logger.log(JSON.stringify(result, null, 2));
 
-    // 仕訳ルール取得
-    const rule = getAccountingRule(result.vendor || '');
-
-    // API未使用版インボイス情報
     const invoiceInfo = getInvoiceInfo(
       result.invoiceNumber || result.invoice_number || '',
       result.invoiceJudgement || result.invoice_judgement || ''
     );
+    const enrichedExpense = enrichWithInvoiceInfo({
+      invoiceNumber: invoiceInfo.registrationNumber
+    });
+    invoiceInfo.registrationNumber = enrichedExpense.invoiceNumber || invoiceInfo.registrationNumber || '';
+    invoiceInfo.officialName = enrichedExpense.invoiceRegisteredName || '';
+    invoiceInfo.invoiceStatus = enrichedExpense.invoiceStatus || invoiceInfo.invoiceStatus || '';
+    invoiceInfo.registrationDate = enrichedExpense.invoiceRegistrationDate || '';
+    invoiceInfo.expireDate = enrichedExpense.invoiceExpireDate || '';
+    invoiceInfo.checkedAt = enrichedExpense.invoiceApiCheckedAt || invoiceInfo.checkedAt || '';
+    invoiceInfo.apiError = enrichedExpense.invoiceApiError || '';
+    invoiceInfo.note = invoiceInfo.apiError || invoiceInfo.note;
 
-    // 取引先正規名は、現時点では仕訳ルール優先
-    // 将来API利用時は invoiceInfo.officialName を優先する
+    // 仕訳ルール取得（インボイス番号・正式名称があれば優先照合）
+    const rule = getAccountingRule(result.vendor || '', invoiceInfo.registrationNumber || '', invoiceInfo.officialName || '');
+
+    // OCR店舗名は正式名称で上書きしない。取引先正規名は従来どおり仕訳ルールを優先する。
     const vendorOfficialName =
-      invoiceInfo.officialName ||
       rule.vendorName ||
       result.vendor ||
       '';
@@ -177,13 +185,22 @@ function submitConfirmedReceiptFromWebApp(data) {
     result.invoiceJudgement
   );
   invoiceInfo.invoiceJudgement = result.invoiceJudgement || invoiceInfo.invoiceJudgement;
-  invoiceInfo.note = invoiceInfo.registrationNumber
-    ? 'ユーザー確認済（API未使用・正式名称未確認）'
-    : 'ユーザー確認済';
+  const enrichedExpense = enrichWithInvoiceInfo({
+    invoiceNumber: invoiceInfo.registrationNumber
+  });
+  invoiceInfo.registrationNumber = enrichedExpense.invoiceNumber || invoiceInfo.registrationNumber || '';
+  invoiceInfo.officialName = enrichedExpense.invoiceRegisteredName || '';
+  invoiceInfo.invoiceStatus = enrichedExpense.invoiceStatus || invoiceInfo.invoiceStatus || '';
+  invoiceInfo.registrationDate = enrichedExpense.invoiceRegistrationDate || '';
+  invoiceInfo.expireDate = enrichedExpense.invoiceExpireDate || '';
+  invoiceInfo.checkedAt = enrichedExpense.invoiceApiCheckedAt || invoiceInfo.checkedAt || '';
+  invoiceInfo.apiError = enrichedExpense.invoiceApiError || '';
+  invoiceInfo.note = invoiceInfo.apiError
+    ? invoiceInfo.apiError
+    : (invoiceInfo.registrationNumber ? 'ユーザー確認済（API照会済）' : 'ユーザー確認済');
 
-  const rule = getAccountingRule(result.vendor || '');
+  const rule = getAccountingRule(result.vendor || '', invoiceInfo.registrationNumber || '', invoiceInfo.officialName || '');
   const vendorOfficialName =
-    invoiceInfo.officialName ||
     rule.vendorName ||
     result.vendor ||
     '';
