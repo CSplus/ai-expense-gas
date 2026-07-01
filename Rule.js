@@ -68,7 +68,6 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
 
 function getAccountingRuleFromInput(categoryInput) {
   const normalizedCategoryInput = String(categoryInput || '').trim();
-  // 入力区分名そのものをシステム設定の「項目」として検索する。
   const account = getAccountFromSystemConfig(normalizedCategoryInput) ||
     getAccountFromSystemConfig('デフォルト');
 
