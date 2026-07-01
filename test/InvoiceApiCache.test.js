@@ -407,3 +407,26 @@ function createInputRuleContext() {
     accountName: '会議費'
   }));
 })();
+
+(function meetingPurposeOptionsReadFromSystemConfigValueColumn() {
+  const { ctx } = createInputRuleContext();
+  const configSheet = ctx.SpreadsheetApp.getActiveSpreadsheet().getSheetByName('システム設定');
+  configSheet.rows.push(['会合目的', '鯱の会', '']);
+  configSheet.rows.push(['会合目的', 'Passion Leaders', '']);
+  configSheet.rows.push(['会合目的', '取引先', '']);
+  configSheet.rows.push(['会合目的', '取引先', '重複は除外']);
+  configSheet.rows.push(['会合目的', 'その他', '']);
+
+  assert.strictEqual(JSON.stringify(ctx.getMeetingPurposeOptions()), JSON.stringify([
+    '鯱の会',
+    'Passion Leaders',
+    '取引先',
+    'その他'
+  ]));
+})();
+
+(function meetingPurposeOptionsFallbackWhenNoConfigRows() {
+  const { ctx } = createInputRuleContext();
+
+  assert.strictEqual(JSON.stringify(ctx.getMeetingPurposeOptions()), JSON.stringify(['取引先', 'その他']));
+})();

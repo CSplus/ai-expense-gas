@@ -12,6 +12,9 @@ const SHEET_RULE    = 'カード明細仕訳ルール';
 const SHEET_TAX_RATE = '税率マスタ';
 const SHEET_ACCOUNTING_EXPORT_HISTORY = '会計出力履歴';
 
+const MEETING_PURPOSE_ITEM = '会合目的';
+const DEFAULT_MEETING_PURPOSE_OPTIONS = ['取引先', 'その他'];
+
 // 経費台帳 v1.0 の正式列番号（1始まり）。読み書き時はヘッダー名から列位置を取得する。
 const COL = {
   TIMESTAMP: 1,        // A タイムスタンプ
@@ -65,6 +68,43 @@ function getConfig(key) {
   }
 
   throw new Error('設定項目が見つかりません: ' + key);
+}
+
+
+function getMeetingPurposeOptions() {
+  const sheet = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getSheetByName(SHEET_CONFIG);
+
+  if (!sheet) {
+    throw new Error('システム設定シートが見つかりません。');
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn ? sheet.getLastColumn() : 0;
+  if (lastRow < 2 || lastColumn < 2) return DEFAULT_MEETING_PURPOSE_OPTIONS.slice();
+
+  const values = sheet.getRange(1, 1, lastRow, lastColumn).getValues();
+  const headers = values[0].map(function(v) { return String(v || '').trim(); });
+  let itemCol = findHeaderIndex(headers, '項目');
+  let valueCol = findHeaderIndex(headers, '値');
+
+  if (itemCol < 0) itemCol = 0;
+  if (valueCol < 0) valueCol = 1;
+
+  const seen = {};
+  const options = [];
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][itemCol] || '').trim() !== MEETING_PURPOSE_ITEM) continue;
+
+    const option = String(values[i][valueCol] || '').trim();
+    if (!option || seen[option]) continue;
+
+    seen[option] = true;
+    options.push(option);
+  }
+
+  return options.length ? options : DEFAULT_MEETING_PURPOSE_OPTIONS.slice();
 }
 
 function getExpenseSheet() {
