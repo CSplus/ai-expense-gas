@@ -395,3 +395,15 @@ function createInputRuleContext() {
     accountName: '雑費'
   }));
 })();
+
+(function inputCategoryLookupDoesNotUseLegacyCodeSuffixConfigKeys() {
+  const { ctx } = createInputRuleContext();
+  ctx.getConfig = function(key) {
+    throw new Error('旧形式の設定項目を参照しました: ' + key);
+  };
+
+  assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('飲食費・会食')), JSON.stringify({
+    accountCode: '6118',
+    accountName: '会議費'
+  }));
+})();
