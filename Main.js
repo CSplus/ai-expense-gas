@@ -74,8 +74,7 @@ function uploadReceiptFromWebApp(data) {
     invoiceInfo.apiError = enrichedExpense.invoiceApiError || '';
     invoiceInfo.note = invoiceInfo.apiError || invoiceInfo.note;
 
-    // 仕訳ルール取得（インボイス番号・正式名称があれば優先照合）
-    const rule = getAccountingRule(result.vendor || '', invoiceInfo.registrationNumber || '', invoiceInfo.officialName || '');
+    // スマホ撮影領収書では、写真の内容や仕訳ルールではなく入力区分から勘定科目を確定する
 
     // 税率・消費税額の補完
     const taxInfo = normalizeTaxInfo(result);
@@ -89,7 +88,7 @@ function uploadReceiptFromWebApp(data) {
 
     updateReceiptAnalysisResult(sheet, row, {
       result: result,
-      inputRule: rule,
+      inputRule: inputRule,
       invoiceInfo: invoiceInfo,
       taxInfo: taxInfo,
       invoiceNote: invoiceNote
@@ -100,7 +99,7 @@ function uploadReceiptFromWebApp(data) {
       date: result.date || '',
       vendor: result.vendor || '',
       amount: result.amount || '',
-      category: rule.accountName,
+      category: inputRule.accountName,
       invoiceNumber: invoiceInfo.registrationNumber || '',
       invoiceJudgement: invoiceInfo.invoiceJudgement || '',
       taxRate: taxInfo.taxRate || '',
@@ -194,7 +193,7 @@ function submitConfirmedReceiptFromWebApp(data) {
     ? invoiceInfo.apiError
     : (invoiceInfo.registrationNumber ? 'ユーザー確認済（API照会済）' : 'ユーザー確認済');
 
-  const rule = getAccountingRule(result.vendor || '', invoiceInfo.registrationNumber || '', invoiceInfo.officialName || '');
+  // スマホ撮影領収書では、写真の内容や仕訳ルールではなく入力区分から勘定科目を確定する
   const taxInfo = {
     taxRate: normalizeTaxRateText(result.taxRate),
     taxAmount: result.taxAmount === '' ? '' : Number(result.taxAmount),
@@ -210,7 +209,7 @@ function submitConfirmedReceiptFromWebApp(data) {
 
   updateReceiptAnalysisResult(sheet, row, {
     result: result,
-    inputRule: rule,
+    inputRule: inputRule,
     invoiceInfo: invoiceInfo,
     taxInfo: taxInfo,
     invoiceNote: invoiceNote

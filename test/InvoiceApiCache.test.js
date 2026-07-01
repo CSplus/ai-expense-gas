@@ -339,3 +339,68 @@ function createRuleContext(ruleRows) {
   assert.strictEqual(ctx.getAccountingRule('該当なし', '', '株式会社API正式名').accountName, '正式名称一致');
   assert.strictEqual(ctx.getAccountingRule('OCR店舗', '', '').accountName, '店舗名一致');
 })();
+
+function createInputRuleContext() {
+  const configSheet = createSheet([
+    ['キー', '値'],
+    ['駐車場・交通費コード', '6112'],
+    ['飲食費・会食コード', '6118'],
+    ['ガソリンコード', '6228'],
+    ['その他経費コード', '6225'],
+    ['デフォルトコード', '6231']
+  ]);
+  const accountSheet = createSheet([
+    ['勘定科目コード', '勘定科目'],
+    ['6112', '旅費交通費'],
+    ['6118', '会議費'],
+    ['6228', '車輌維持費'],
+    ['6225', '備品消耗品費'],
+    ['6231', '雑費']
+  ]);
+  accountSheet.getDataRange = function() {
+    return this.getRange(1, 1, this.getLastRow(), this.getLastColumn());
+  };
+  const ctx = {
+    SpreadsheetApp: {
+      getActiveSpreadsheet() {
+        return {
+          getSheetByName(name) {
+            if (name === 'システム設定') return configSheet;
+            if (name === '勘定科目マスタ') return accountSheet;
+            return null;
+          }
+        };
+      }
+    },
+    console
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync('Config.js', 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync('Rule.js', 'utf8'), ctx);
+  return { ctx };
+}
+
+(function inputCategoryMapsToSystemConfigAccountCodeAndMasterName() {
+  const { ctx } = createInputRuleContext();
+
+  assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('駐車場・交通費')), JSON.stringify({
+    accountCode: '6112',
+    accountName: '旅費交通費'
+  }));
+  assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('飲食費・会食')), JSON.stringify({
+    accountCode: '6118',
+    accountName: '会議費'
+  }));
+  assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('ガソリン')), JSON.stringify({
+    accountCode: '6228',
+    accountName: '車輌維持費'
+  }));
+  assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('その他経費')), JSON.stringify({
+    accountCode: '6225',
+    accountName: '備品消耗品費'
+  }));
+  assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('想定外')), JSON.stringify({
+    accountCode: '6231',
+    accountName: '雑費'
+  }));
+})();
