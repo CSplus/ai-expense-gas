@@ -93,9 +93,10 @@ function getAccountByCode(code) {
 }
 
 function getAccountingRuleFromInput(categoryInput) {
+  const normalizedCategoryInput = String(categoryInput || '').trim();
   let code;
 
-  switch (categoryInput) {
+  switch (normalizedCategoryInput) {
     case '駐車場・交通費':
       code = getConfig('駐車場・交通費コード');
       break;
