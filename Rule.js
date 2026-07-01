@@ -1,6 +1,6 @@
 /*************************************************
  * Rule.gs
- * 勘定科目・インボイス優先ルール
+ * カード明細仕訳ルール・入力区分別勘定科目設定
  *************************************************/
 
 function getAccountingRule(vendor, invoiceNumber, registeredName) {
@@ -8,7 +8,7 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
   const sheet = ss.getSheetByName(SHEET_RULE);
 
   if (!sheet) {
-    throw new Error('仕分けルールシートが見つかりません。');
+    throw new Error('カード明細仕訳ルールシートが見つかりません。');
   }
 
   ensureAccountingRuleInvoiceColumns(sheet);
@@ -66,58 +66,54 @@ function getAccountingRule(vendor, invoiceNumber, registeredName) {
   };
 }
 
-function getAccountByCode(code) {
+function getAccountingRuleFromInput(categoryInput) {
+  const normalizedCategoryInput = String(categoryInput || '').trim();
+  const account = getAccountFromSystemConfig(normalizedCategoryInput) ||
+    getAccountFromSystemConfig('デフォルト');
+
+  if (!account) {
+    throw new Error('システム設定に入力区分別の勘定科目設定が見つかりません。');
+  }
+
+  return account;
+}
+
+function getAccountFromSystemConfig(itemName) {
+  const target = String(itemName || '').trim();
+  if (!target) return null;
+
   const sheet = SpreadsheetApp
     .getActiveSpreadsheet()
-    .getSheetByName(SHEET_ACCOUNT);
+    .getSheetByName(SHEET_CONFIG);
 
   if (!sheet) {
-    throw new Error('勘定科目マスタシートが見つかりません。');
+    throw new Error('システム設定シートが見つかりません。');
   }
 
   const values = sheet.getDataRange().getValues();
+  if (!values.length) return null;
+
+  const headers = values[0].map(function(v) { return String(v || '').trim(); });
+  let itemCol = findHeaderIndex(headers, '項目');
+  let codeCol = findHeaderIndex(headers, 'コード');
+  let accountNameCol = findHeaderIndex(headers, '勘定科目名');
+
+  if (itemCol < 0 || codeCol < 0 || accountNameCol < 0) {
+    itemCol = 0;
+    codeCol = 1;
+    accountNameCol = 2;
+  }
 
   for (let i = 1; i < values.length; i++) {
-    if (String(values[i][0]) === String(code)) {
+    if (String(values[i][itemCol] || '').trim() === target) {
       return {
-        accountCode: values[i][0],
-        accountName: values[i][1]
+        accountCode: values[i][codeCol],
+        accountName: values[i][accountNameCol]
       };
     }
   }
 
-  return {
-    accountCode: code,
-    accountName: '未設定'
-  };
-}
-
-function getAccountingRuleFromInput(categoryInput) {
-  const normalizedCategoryInput = String(categoryInput || '').trim();
-  let code;
-
-  switch (normalizedCategoryInput) {
-    case '駐車場・交通費':
-      code = getConfig('駐車場・交通費コード');
-      break;
-
-    case '飲食費・会食':
-      code = getConfig('飲食費・会食コード');
-      break;
-
-    case 'ガソリン':
-      code = getConfig('ガソリンコード');
-      break;
-
-    case 'その他経費':
-      code = getConfig('その他経費コード');
-      break;
-
-    default:
-      code = getConfig('デフォルトコード');
-  }
-
-  return getAccountByCode(code);
+  return null;
 }
 
 
