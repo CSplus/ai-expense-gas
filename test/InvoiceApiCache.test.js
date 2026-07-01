@@ -309,12 +309,12 @@ function createRuleContext(ruleRows) {
     return this.getRange(1, 1, this.getLastRow(), this.getLastColumn());
   };
   const ctx = {
-    SHEET_RULE: '仕分けルール',
+    SHEET_RULE: 'カード明細仕訳ルール',
     SpreadsheetApp: {
       getActiveSpreadsheet() {
         return {
           getSheetByName(name) {
-            return name === '仕分けルール' ? sheet : null;
+            return name === 'カード明細仕訳ルール' ? sheet : null;
           }
         };
       }
@@ -342,22 +342,14 @@ function createRuleContext(ruleRows) {
 
 function createInputRuleContext() {
   const configSheet = createSheet([
-    ['キー', '値'],
-    ['駐車場・交通費コード', '6112'],
-    ['飲食費・会食コード', '6118'],
-    ['ガソリンコード', '6228'],
-    ['その他経費コード', '6225'],
-    ['デフォルトコード', '6231']
+    ['項目', 'コード', '勘定科目名'],
+    ['駐車場・交通費', '6112', '旅費交通費'],
+    ['飲食費・会食', '6118', '会議費'],
+    ['ガソリン', '6228', '車輌維持費'],
+    ['その他経費', '6225', '備品消耗品費'],
+    ['デフォルト', '6231', '雑費']
   ]);
-  const accountSheet = createSheet([
-    ['勘定科目コード', '勘定科目'],
-    ['6112', '旅費交通費'],
-    ['6118', '会議費'],
-    ['6228', '車輌維持費'],
-    ['6225', '備品消耗品費'],
-    ['6231', '雑費']
-  ]);
-  accountSheet.getDataRange = function() {
+  configSheet.getDataRange = function() {
     return this.getRange(1, 1, this.getLastRow(), this.getLastColumn());
   };
   const ctx = {
@@ -366,7 +358,6 @@ function createInputRuleContext() {
         return {
           getSheetByName(name) {
             if (name === 'システム設定') return configSheet;
-            if (name === '勘定科目マスタ') return accountSheet;
             return null;
           }
         };
@@ -380,7 +371,7 @@ function createInputRuleContext() {
   return { ctx };
 }
 
-(function inputCategoryMapsToSystemConfigAccountCodeAndMasterName() {
+(function inputCategoryMapsToSystemConfigAccountCodeAndName() {
   const { ctx } = createInputRuleContext();
 
   assert.strictEqual(JSON.stringify(ctx.getAccountingRuleFromInput('駐車場・交通費')), JSON.stringify({
