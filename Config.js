@@ -8,8 +8,7 @@ const TIMEZONE = 'Asia/Tokyo';
 const SHEET_EXPENSE = '経費台帳';
 const SHEET_SUMMARY = '月次集計';
 const SHEET_CONFIG  = 'システム設定';
-const SHEET_RULE    = '仕分けルール';
-const SHEET_ACCOUNT = '勘定科目マスタ';
+const SHEET_RULE    = 'カード明細仕訳ルール';
 const SHEET_TAX_RATE = '税率マスタ';
 const SHEET_ACCOUNTING_EXPORT_HISTORY = '会計出力履歴';
 
